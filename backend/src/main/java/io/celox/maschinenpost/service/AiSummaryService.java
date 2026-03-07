@@ -14,6 +14,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Slf4j
@@ -22,14 +23,15 @@ public class AiSummaryService {
 
     private final ArticleRepository articleRepository;
     private final ObjectMapper objectMapper;
+    private final AtomicBoolean processing = new AtomicBoolean(false);
 
     @Value("${maschinenpost.claude.api-key:}")
     private String apiKey;
 
-    @Value("${maschinenpost.claude.model:claude-sonnet-4-20250514}")
+    @Value("${maschinenpost.claude.model:claude-haiku-4-5-20251001}")
     private String model;
 
-    @Value("${maschinenpost.claude.max-tokens:1024}")
+    @Value("${maschinenpost.claude.max-tokens:512}")
     private int maxTokens;
 
     private RestClient restClient;
@@ -61,17 +63,17 @@ public class AiSummaryService {
 
     public AiProcessingResult processArticle(Article article) {
         if (apiKey == null || apiKey.isBlank()) {
-            log.warn("Claude API key not configured. Skipping AI processing.");
             return null;
         }
 
         try {
-            String userMessage = "Artikel-Titel: " + article.getTitle() + "\n\nArtikel-Inhalt: " + article.getRawContent();
-
-            // Truncate content if too long
-            if (userMessage.length() > 8000) {
-                userMessage = userMessage.substring(0, 8000) + "...";
+            String rawContent = article.getRawContent() != null ? article.getRawContent() : "";
+            // Truncate content aggressively to save tokens
+            if (rawContent.length() > 2000) {
+                rawContent = rawContent.substring(0, 2000) + "...";
             }
+
+            String userMessage = "Titel: " + article.getTitle() + "\n\n" + rawContent;
 
             Map<String, Object> requestBody = Map.of(
                     "model", model,
@@ -92,7 +94,6 @@ public class AiSummaryService {
                     .retrieve()
                     .body(String.class);
 
-            // Parse the API response
             Map<String, Object> response = objectMapper.readValue(responseBody, new TypeReference<>() {});
 
             @SuppressWarnings("unchecked")
@@ -104,7 +105,6 @@ public class AiSummaryService {
 
             String text = (String) content.get(0).get("text");
 
-            // Clean up the text in case it has markdown code blocks
             text = text.trim();
             if (text.startsWith("```json")) {
                 text = text.substring(7);
@@ -116,7 +116,6 @@ public class AiSummaryService {
             }
             text = text.trim();
 
-            // Parse the JSON result
             Map<String, Object> resultMap = objectMapper.readValue(text, new TypeReference<>() {});
 
             String summary = (String) resultMap.get("summary");
@@ -135,42 +134,53 @@ public class AiSummaryService {
 
     public void processUnprocessedArticles() {
         if (apiKey == null || apiKey.isBlank()) {
-            log.info("Claude API key not configured. Skipping AI processing of unprocessed articles.");
+            log.info("Claude API key not configured. Skipping AI processing.");
             return;
         }
 
-        List<Article> unprocessed = articleRepository.findByProcessedFalse();
-        if (unprocessed.isEmpty()) {
-            log.info("No unprocessed articles to process.");
+        if (!processing.compareAndSet(false, true)) {
+            log.info("AI processing already running. Skipping.");
             return;
         }
 
-        log.info("Processing {} unprocessed articles with AI...", unprocessed.size());
-
-        for (Article article : unprocessed) {
-            try {
-                AiProcessingResult result = processArticle(article);
-                if (result != null) {
-                    article.setSummary(result.summary());
-                    article.setTagList(result.tags());
-                    article.setCategory(result.category());
-                    article.setSentiment(result.sentiment());
-                    article.setProcessed(true);
-                    articleRepository.save(article);
-                    log.info("Processed article: {}", article.getTitle());
-                }
-
-                // Small delay to avoid rate limiting
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.warn("AI processing interrupted.");
-                break;
-            } catch (Exception e) {
-                log.error("Error processing article '{}': {}", article.getTitle(), e.getMessage());
+        try {
+            List<Article> unprocessed = articleRepository.findByProcessedFalse();
+            if (unprocessed.isEmpty()) {
+                log.info("No unprocessed articles to process.");
+                return;
             }
-        }
 
-        log.info("AI processing complete.");
+            log.info("Processing {} unprocessed articles with AI...", unprocessed.size());
+
+            for (Article article : unprocessed) {
+                // Re-check in case another instance processed it
+                if (article.isProcessed()) continue;
+
+                try {
+                    AiProcessingResult result = processArticle(article);
+                    if (result != null) {
+                        article.setSummary(result.summary());
+                        article.setTagList(result.tags());
+                        article.setCategory(result.category());
+                        article.setSentiment(result.sentiment());
+                        article.setProcessed(true);
+                        articleRepository.save(article);
+                        log.info("Processed article: {}", article.getTitle());
+                    }
+
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.warn("AI processing interrupted.");
+                    break;
+                } catch (Exception e) {
+                    log.error("Error processing article '{}': {}", article.getTitle(), e.getMessage());
+                }
+            }
+
+            log.info("AI processing complete.");
+        } finally {
+            processing.set(false);
+        }
     }
 }
