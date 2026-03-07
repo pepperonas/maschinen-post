@@ -30,7 +30,7 @@ public class FeedScheduler {
         runFetchCycle("Initial");
     }
 
-    private void runFetchCycle(String trigger) {
+    public void runFetchCycle(String trigger) {
         if (!running.compareAndSet(false, true)) {
             log.info("{} fetch skipped — another fetch is already running.", trigger);
             return;

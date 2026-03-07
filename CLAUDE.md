@@ -62,6 +62,23 @@ All endpoints under `/api/`. Backend returns Spring `Page<T>` JSON for paginated
 | `GET /api/stats` | Returns total counts + articlesPerCategory map |
 | `POST /api/refresh` | Async background refresh |
 
+## Concurrency Safety (CRITICAL)
+
+All feed-fetching and AI-processing paths MUST go through `FeedScheduler.runFetchCycle()`. This method is protected by an `AtomicBoolean` guard that ensures only one fetch cycle runs at a time. **Never call `FeedService.fetchAllFeeds()` or `AiSummaryService.processUnprocessedArticles()` directly from new code paths** — always route through `FeedScheduler`.
+
+Current call paths (all protected):
+- `@Scheduled` (every 30 min with 60s initial delay) → `FeedScheduler.runFetchCycle("Scheduled")`
+- `@EventListener(ApplicationReadyEvent)` → `FeedScheduler.runFetchCycle("Initial")`
+- `POST /api/refresh` → `StatsController` → `FeedScheduler.runFetchCycle("Manual")`
+
+Additional safeguards:
+- `AiSummaryService.processUnprocessedArticles()` has its own `AtomicBoolean` lock as a second barrier
+- Each article is re-fetched from DB (`findById`) before Claude API call to verify it hasn't been processed by another thread
+- 1000ms delay between API calls to prevent burst billing
+- Article content truncated to 2000 chars to minimize input tokens
+
+**Why:** A race condition between unguarded threads caused ~$5 in duplicate Claude API charges. Three threads processed the same articles simultaneously.
+
 ## Key Conventions
 
 - **Language:** All UI text is in German. AI summaries, categories, sentiment values are German.
@@ -69,3 +86,4 @@ All endpoints under `/api/`. Backend returns Spring `Page<T>` JSON for paginated
 - **AI processing is optional:** Backend runs fine without `CLAUDE_API_KEY` — articles just lack summaries/tags/categories.
 - **SQLite in dev:** Database file `maschinenpost.db` created in the backend working directory. Hibernate `ddl-auto: update`.
 - **Lombok:** Backend uses `@Data`, `@Builder`, `@RequiredArgsConstructor`, `@Slf4j` throughout.
+- **AI model:** Claude Haiku 4.5 (`claude-haiku-4-5-20251001`) with max 512 tokens. Do NOT switch to Sonnet/Opus without explicit approval — cost difference is 5-50x.

@@ -153,19 +153,20 @@ public class AiSummaryService {
             log.info("Processing {} unprocessed articles with AI...", unprocessed.size());
 
             for (Article article : unprocessed) {
-                // Re-check in case another instance processed it
-                if (article.isProcessed()) continue;
+                // Re-fetch from DB to check if another thread already processed it
+                Article fresh = articleRepository.findById(article.getId()).orElse(null);
+                if (fresh == null || fresh.isProcessed()) continue;
 
                 try {
-                    AiProcessingResult result = processArticle(article);
+                    AiProcessingResult result = processArticle(fresh);
                     if (result != null) {
-                        article.setSummary(result.summary());
-                        article.setTagList(result.tags());
-                        article.setCategory(result.category());
-                        article.setSentiment(result.sentiment());
-                        article.setProcessed(true);
-                        articleRepository.save(article);
-                        log.info("Processed article: {}", article.getTitle());
+                        fresh.setSummary(result.summary());
+                        fresh.setTagList(result.tags());
+                        fresh.setCategory(result.category());
+                        fresh.setSentiment(result.sentiment());
+                        fresh.setProcessed(true);
+                        articleRepository.save(fresh);
+                        log.info("Processed article: {}", fresh.getTitle());
                     }
 
                     Thread.sleep(1000);
