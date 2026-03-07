@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFE000"/>
+      <stop offset="100%" stop-color="#CCB200"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#0a0a0a"/>
+
+  <!-- Gear: precise 8-tooth path, perfectly centered at 256,256 -->
+  <path d="
+    M 228,56 h56 l4,44 c18,4 34,12 48,22 l36,-28 40,40 -28,36 c10,14 18,30 22,48 l44,4 v56 l-44,4 c-4,18 -12,34 -22,48 l28,36 -40,40 -36,-28 c-14,10 -30,18 -48,22 l-4,44 h-56 l-4,-44 c-18,-4 -34,-12 -48,-22 l-36,28 -40,-40 28,-36 c-10,-14 -18,-30 -22,-48 l-44,-4 v-56 l44,-4 c4,-18 12,-34 22,-48 l-28,-36 40,-40 36,28 c14,-10 30,-18 48,-22 z
+  " fill="url(#g)"/>
+
+  <!-- Inner cutout -->
+  <circle cx="256" cy="256" r="108" fill="#0a0a0a"/>
+
+  <!-- Letter M — centered in gear hole -->
+  <path d="
+    M 206,312 V 200 h36 l14,56 14,-56 h36 v112 h-28 V 236 l-18,52 h-8 l-18,-52 v76 z
+  " fill="url(#g)"/>
+</svg>

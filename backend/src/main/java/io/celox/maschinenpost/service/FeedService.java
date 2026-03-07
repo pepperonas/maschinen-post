@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Slf4j
@@ -32,30 +31,52 @@ public class FeedService {
     private final FeedRepository feedRepository;
     private final ArticleRepository articleRepository;
 
-    private static final Map<String, String> DEFAULT_FEEDS = Map.of(
-            "Google AI Blog", "https://feeds.feedburner.com/blogspot/gJZg",
-            "OpenAI Blog", "https://openai.com/blog/rss.xml",
-            "The Verge AI", "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
-            "TechCrunch AI", "https://techcrunch.com/category/artificial-intelligence/feed/",
-            "MIT AI News", "https://news.mit.edu/topic/mitartificial-intelligence2-rss.xml",
-            "IEEE Spectrum Robotics", "https://spectrum.ieee.org/feeds/topic/robotics.rss",
-            "The Robot Report", "https://www.therobotreport.com/feed/"
+    private record FeedDef(String name, String url, String language) {}
+
+    private static final List<FeedDef> DEFAULT_FEEDS = List.of(
+            // English
+            new FeedDef("Google AI Blog", "https://feeds.feedburner.com/blogspot/gJZg", "en"),
+            new FeedDef("OpenAI Blog", "https://openai.com/blog/rss.xml", "en"),
+            new FeedDef("The Verge AI", "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml", "en"),
+            new FeedDef("TechCrunch AI", "https://techcrunch.com/category/artificial-intelligence/feed/", "en"),
+            new FeedDef("MIT AI News", "https://news.mit.edu/topic/mitartificial-intelligence2-rss.xml", "en"),
+            new FeedDef("IEEE Spectrum Robotics", "https://spectrum.ieee.org/feeds/topic/robotics.rss", "en"),
+            new FeedDef("The Robot Report", "https://www.therobotreport.com/feed/", "en"),
+            // Deutsch
+            new FeedDef("heise online", "https://www.heise.de/rss/heise-atom.xml", "de"),
+            new FeedDef("Golem.de", "https://rss.golem.de/rss.php?feed=RSS2.0", "de"),
+            new FeedDef("t3n", "https://t3n.de/rss.xml", "de")
     );
 
     @PostConstruct
     public void initializeFeeds() {
         if (feedRepository.count() == 0) {
             log.info("Initializing default RSS feeds...");
-            DEFAULT_FEEDS.forEach((name, url) -> {
+            for (FeedDef def : DEFAULT_FEEDS) {
                 Feed feed = Feed.builder()
-                        .name(name)
-                        .url(url)
+                        .name(def.name())
+                        .url(def.url())
+                        .language(def.language())
                         .active(true)
                         .build();
                 feedRepository.save(feed);
-                log.info("Added feed: {} ({})", name, url);
-            });
+                log.info("Added feed: {} ({}) [{}]", def.name(), def.url(), def.language());
+            }
             log.info("Default feeds initialized.");
+        } else {
+            // Add new feeds that don't exist yet
+            for (FeedDef def : DEFAULT_FEEDS) {
+                if (!feedRepository.existsByUrl(def.url())) {
+                    Feed feed = Feed.builder()
+                            .name(def.name())
+                            .url(def.url())
+                            .language(def.language())
+                            .active(true)
+                            .build();
+                    feedRepository.save(feed);
+                    log.info("Added new feed: {} ({}) [{}]", def.name(), def.url(), def.language());
+                }
+            }
         }
     }
 
@@ -122,6 +143,7 @@ public class FeedService {
                                 .url(entryUrl)
                                 .urlHash(urlHash)
                                 .source(feed.getName())
+                                .language(feed.getLanguage() != null ? feed.getLanguage() : "en")
                                 .publishedAt(publishedAt)
                                 .rawContent(rawContent)
                                 .processed(false)

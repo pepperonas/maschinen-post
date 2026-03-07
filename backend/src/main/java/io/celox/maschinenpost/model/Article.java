@@ -35,6 +35,9 @@ public class Article {
 
     private String source;
 
+    @Builder.Default
+    private String language = "en";
+
     private LocalDateTime publishedAt;
 
     @Column(columnDefinition = "TEXT")

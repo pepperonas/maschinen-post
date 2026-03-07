@@ -23,6 +23,9 @@ public class Feed {
     private String url;
 
     @Builder.Default
+    private String language = "en";
+
+    @Builder.Default
     private boolean active = true;
 
     private LocalDateTime lastFetchedAt;

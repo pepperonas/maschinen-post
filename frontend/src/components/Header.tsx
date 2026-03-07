@@ -1,4 +1,5 @@
 import type { Stats } from '../api/types'
+import { timeAgo } from '../utils/timeAgo'
 
 interface HeaderProps {
   stats: Stats | null
@@ -16,33 +17,38 @@ export function Header({ stats, dark, onToggleTheme }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="font-mono font-bold text-2xl md:text-3xl tracking-[0.2em] text-machine-accent select-none">
+            <h1 className="font-mono font-bold text-2xl md:text-3xl tracking-[0.2em] dark:text-machine-accent text-gray-900 select-none">
               MASCHINENPOST
             </h1>
-            <p className="font-mono text-[10px] md:text-xs tracking-[0.3em] dark:text-machine-muted text-gray-500 mt-0.5">
+            <p className="font-mono text-[10px] md:text-xs tracking-[0.3em] dark:text-machine-text/60 text-gray-500 mt-0.5">
               KI & ROBOTIK NACHRICHTEN
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Article counter */}
+          {/* Article counter + last update */}
           {stats && (
-            <div className="hidden sm:flex items-center gap-2 font-mono text-xs dark:text-machine-muted text-gray-500">
+            <div className="hidden sm:flex items-center gap-2 font-mono text-xs dark:text-machine-text/70 text-gray-600">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-machine-green opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-machine-green"></span>
               </span>
               <span>
-                {stats.totalArticles} Artikel verarbeitet
+                {stats.totalArticles} Artikel
               </span>
+              {stats.lastUpdate && (
+                <span className="dark:text-machine-muted text-gray-500">
+                  | aktualisiert {timeAgo(stats.lastUpdate)}
+                </span>
+              )}
             </div>
           )}
 
           {/* Theme toggle */}
           <button
             onClick={onToggleTheme}
-            className="p-2 rounded dark:text-machine-muted text-gray-500 hover:text-machine-accent transition-colors"
+            className="p-2 rounded dark:text-machine-muted text-gray-500 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors"
             aria-label={dark ? 'Light Mode' : 'Dark Mode'}
           >
             {dark ? (
@@ -87,7 +93,7 @@ export function Header({ stats, dark, onToggleTheme }: HeaderProps) {
       {/* Ticker tape */}
       <div className="ticker-wrap bg-machine-accent/10 dark:bg-machine-accent/10 bg-yellow-50 border-t border-b border-machine-accent/20 py-1">
         <div className="inline-flex animate-ticker">
-          <span className="font-mono text-[11px] font-medium text-machine-accent/70 dark:text-machine-accent/70 text-yellow-700/70 px-4">
+          <span className="font-mono text-[11px] font-medium dark:text-machine-accent/70 text-yellow-700/70 px-4">
             {tickerText.repeat(4)}
           </span>
         </div>

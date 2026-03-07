@@ -19,4 +19,4 @@ maschinenpost:
     model: claude-haiku-4-5-20251001
     max-tokens: 512
   scheduler:
-    feed-fetch-rate: 1800000
+    feed-fetch-rate: 10800000

@@ -3,6 +3,7 @@ export interface Article {
   title: string
   url: string
   source: string
+  language: string
   publishedAt: string
   rawContent: string | null
   summary: string | null

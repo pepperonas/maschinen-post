@@ -13,7 +13,7 @@
 
     <groupId>io.celox</groupId>
     <artifactId>maschinenpost</artifactId>
-    <version>0.0.1</version>
+    <version>1.0.0</version>
     <name>MaschinenPost</name>
     <description>AI and Robotics News Aggregator</description>
 
@@ -35,7 +35,7 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- SQLite -->
+        <!-- SQLite (dev) -->
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
@@ -44,6 +44,13 @@
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-community-dialects</artifactId>
+        </dependency>
+
+        <!-- PostgreSQL (prod) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- RSS Parsing -->

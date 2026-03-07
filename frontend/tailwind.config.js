@@ -13,7 +13,7 @@ export default {
           accent: '#FFE000',
           green: '#00FF41',
           text: '#e0e0e0',
-          muted: '#666666',
+          muted: '#999999',
         },
       },
       fontFamily: {

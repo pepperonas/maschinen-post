@@ -51,7 +51,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
           dark:text-machine-text text-gray-900
           dark:border-machine-border border-gray-200
           border rounded-sm
-          dark:placeholder:text-machine-muted placeholder:text-gray-400
+          dark:placeholder:text-machine-text/40 placeholder:text-gray-400
           focus:outline-none focus:border-machine-accent
           transition-colors"
       />
@@ -63,7 +63,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
             setLocal('')
             onChange('')
           }}
-          className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-machine-muted text-gray-400 hover:text-machine-accent transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-machine-muted text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors"
         >
           <svg
             width="14"

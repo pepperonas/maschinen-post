@@ -54,7 +54,7 @@ export function ArticleGrid({
         </p>
         <button
           onClick={onRetry}
-          className="font-mono text-sm px-4 py-2 border border-machine-accent text-machine-accent hover:bg-machine-accent hover:text-black rounded-sm transition-colors"
+          className="font-mono text-sm px-4 py-2 border dark:border-machine-accent border-gray-900 dark:text-machine-accent text-gray-900 dark:hover:bg-machine-accent dark:hover:text-black hover:bg-gray-900 hover:text-white rounded-sm transition-colors"
         >
           Erneut versuchen
         </button>
@@ -102,7 +102,7 @@ export function ArticleGrid({
         <div className="flex justify-center mt-8">
           <button
             onClick={onLoadMore}
-            className="font-mono text-sm px-6 py-2.5 border border-machine-accent text-machine-accent hover:bg-machine-accent hover:text-black rounded-sm transition-colors"
+            className="font-mono text-sm px-6 py-2.5 border dark:border-machine-accent border-gray-900 dark:text-machine-accent text-gray-900 dark:hover:bg-machine-accent dark:hover:text-black hover:bg-gray-900 hover:text-white rounded-sm transition-colors"
           >
             Mehr laden
           </button>
