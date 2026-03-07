@@ -16,15 +16,25 @@
 
 Dark, industrial-styled AI & Robotics news aggregator with automated content fetching and Claude-powered German-language summarization.
 
+## Screenshots
+
+### Live Feed — Dark Industrial UI
+![MaschinenPost Dark Theme](docs/screenshot-dark.png)
+
+### AI-Powered Summaries with Category Filtering
+![MaschinenPost AI Summaries](docs/screenshot-ai.png)
+
 ## Features
 
 - **RSS Feed Aggregation** — Fetches from 5 major AI/Robotics sources every 30 minutes
-- **AI Summarization** — Claude API generates concise German summaries, tags, categories, and sentiment
-- **Industrial Dark UI** — Brutalist design with IBM Plex Mono, grid textures, and electric yellow accents
-- **Search & Filter** — Full-text search across titles and summaries, category filtering
-- **Live Updates** — Polling for new articles with notification banner
+- **AI Summarization** — Claude API generates concise German summaries, tags, categories, and sentiment analysis
+- **Industrial Dark UI** — Brutalist design with IBM Plex Mono, subtle grid textures, and electric yellow accents
+- **Category Filtering** — Filter by KI-Modelle, Robotik, Regulierung, Startups, Forschung, Hardware, Tools
+- **Full-Text Search** — Debounced search across titles and AI summaries
+- **Live Updates** — 30s polling with "Neue Artikel" notification banner
+- **Sentiment Analysis** — Visual indicators (&#9650; positiv, &#9679; neutral, &#9660; kritisch) per article
 - **Dark/Light Mode** — Theme toggle with localStorage persistence
-- **Responsive** — Mobile-first design with dense card grid
+- **Responsive** — Mobile-first design with dense 3-column card grid
 
 ## Tech Stack
 
@@ -39,11 +49,13 @@ Dark, industrial-styled AI & Robotics news aggregator with automated content fet
 
 ## RSS Sources
 
-- Google AI Blog
-- OpenAI Blog
-- The Verge AI
-- TechCrunch AI
-- MIT AI News
+| Source | Feed |
+|--------|------|
+| Google AI Blog | `feeds.feedburner.com/blogspot/gJZg` |
+| OpenAI Blog | `openai.com/blog/rss.xml` |
+| The Verge AI | `theverge.com/rss/ai-artificial-intelligence/index.xml` |
+| TechCrunch AI | `techcrunch.com/category/artificial-intelligence/feed/` |
+| MIT AI News | `news.mit.edu/topic/mitartificial-intelligence2-rss.xml` |
 
 ## Prerequisites
 
@@ -90,7 +102,7 @@ The frontend starts on `http://localhost:5173` with API proxy to the backend.
 cd frontend
 npm run build
 
-# Build backend (optionally copy frontend build to static resources)
+# Build backend
 cd backend
 mvn clean package
 

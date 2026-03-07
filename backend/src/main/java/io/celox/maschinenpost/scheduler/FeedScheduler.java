@@ -9,6 +9,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -16,20 +18,30 @@ public class FeedScheduler {
 
     private final FeedService feedService;
     private final AiSummaryService aiSummaryService;
+    private final AtomicBoolean running = new AtomicBoolean(false);
 
-    @Scheduled(fixedRateString = "${maschinenpost.scheduler.feed-fetch-rate}")
+    @Scheduled(fixedRateString = "${maschinenpost.scheduler.feed-fetch-rate}", initialDelay = 60000)
     public void fetchFeeds() {
-        log.info("Starting scheduled feed fetch...");
-        feedService.fetchAllFeeds();
-        aiSummaryService.processUnprocessedArticles();
-        log.info("Feed fetch complete.");
+        runFetchCycle("Scheduled");
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        log.info("Application ready. Triggering initial feed fetch...");
-        feedService.fetchAllFeeds();
-        aiSummaryService.processUnprocessedArticles();
-        log.info("Initial feed fetch complete.");
+        runFetchCycle("Initial");
+    }
+
+    private void runFetchCycle(String trigger) {
+        if (!running.compareAndSet(false, true)) {
+            log.info("{} fetch skipped — another fetch is already running.", trigger);
+            return;
+        }
+        try {
+            log.info("{} feed fetch started...", trigger);
+            feedService.fetchAllFeeds();
+            aiSummaryService.processUnprocessedArticles();
+            log.info("{} feed fetch complete.", trigger);
+        } finally {
+            running.set(false);
+        }
     }
 }
