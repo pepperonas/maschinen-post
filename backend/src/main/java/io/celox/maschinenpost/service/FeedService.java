@@ -37,7 +37,9 @@ public class FeedService {
             "OpenAI Blog", "https://openai.com/blog/rss.xml",
             "The Verge AI", "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
             "TechCrunch AI", "https://techcrunch.com/category/artificial-intelligence/feed/",
-            "MIT AI News", "https://news.mit.edu/topic/mitartificial-intelligence2-rss.xml"
+            "MIT AI News", "https://news.mit.edu/topic/mitartificial-intelligence2-rss.xml",
+            "IEEE Spectrum Robotics", "https://spectrum.ieee.org/feeds/topic/robotics.rss",
+            "The Robot Report", "https://www.therobotreport.com/feed/"
     );
 
     @PostConstruct
