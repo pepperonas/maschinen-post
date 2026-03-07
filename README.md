@@ -1,5 +1,19 @@
 # MaschinenPost
 
+[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://github.com/pepperonas/maschinen-post/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178c6.svg)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-38bdf8.svg)](https://tailwindcss.com/)
+[![Vite](https://img.shields.io/badge/Vite-5-646cff.svg)](https://vitejs.dev/)
+[![Claude API](https://img.shields.io/badge/Claude%20API-Sonnet%204-cc785c.svg)](https://docs.anthropic.com/)
+[![SQLite](https://img.shields.io/badge/SQLite-3.45-003b57.svg)](https://www.sqlite.org/)
+[![GitHub](https://img.shields.io/github/stars/pepperonas/maschinen-post?style=social)](https://github.com/pepperonas/maschinen-post)
+[![GitHub last commit](https://img.shields.io/github/last-commit/pepperonas/maschinen-post)](https://github.com/pepperonas/maschinen-post/commits/main)
+[![GitHub repo size](https://img.shields.io/github/repo-size/pepperonas/maschinen-post)](https://github.com/pepperonas/maschinen-post)
+
 Dark, industrial-styled AI & Robotics news aggregator with automated content fetching and Claude-powered German-language summarization.
 
 ## Features
@@ -81,7 +95,7 @@ cd backend
 mvn clean package
 
 # Run the JAR
-java -jar target/maschinenpost-1.0.0.jar
+java -jar target/maschinenpost-0.0.1.jar
 ```
 
 ## API Endpoints
@@ -108,7 +122,11 @@ Application config in `backend/src/main/resources/application.yml`.
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).
+
+## Author
+
+**Martin Pfeffer** — [celox.io](https://celox.io) — [GitHub](https://github.com/pepperonas)
 
 ---
 
