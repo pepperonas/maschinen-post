@@ -10,6 +10,7 @@ export interface Article {
   tags: string[]
   category: string | null
   sentiment: string | null
+  duplicateOfId: number | null
   processed: boolean
   createdAt: string
   updatedAt: string
@@ -29,7 +30,11 @@ export interface Feed {
   id: number
   name: string
   url: string
+  language: string
   active: boolean
+  failCount: number
+  lastError: string | null
+  disabledAt: string | null
   lastFetchedAt: string | null
   createdAt: string
 }
@@ -40,6 +45,29 @@ export interface Stats {
   totalFeeds: number
   lastUpdate: string | null
   articlesPerCategory: Record<string, number>
+}
+
+export interface StatsHistory {
+  articlesPerSource: Record<string, number>
+  sentimentDistribution: Record<string, number>
+  totalInPeriod: number
+  days: number
+}
+
+export interface TrendingTopic {
+  topic: string
+  category: string
+  articleCount: number
+  articles: Article[]
+  latestAt: string | null
+}
+
+export interface DigestResponse {
+  period: string
+  from: string
+  to: string
+  totalArticles: number
+  sections: Record<string, Article[]>
 }
 
 export const CATEGORIES = [

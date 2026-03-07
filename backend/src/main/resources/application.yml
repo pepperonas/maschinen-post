@@ -22,6 +22,15 @@ server:
     mime-types: application/json
     min-response-size: 1024
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
 maschinenpost:
   claude:
     api-key: ${CLAUDE_API_KEY:}
@@ -29,3 +38,5 @@ maschinenpost:
     max-tokens: 256
   scheduler:
     feed-fetch-rate: 43200000
+  retention:
+    days: 90

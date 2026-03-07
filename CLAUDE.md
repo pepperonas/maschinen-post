@@ -22,6 +22,7 @@ npm install                              # install dependencies
 npm run dev                              # dev server on :5173 (proxies /api -> :8080)
 npm run build                            # typecheck + production build
 npx tsc --noEmit                         # typecheck only
+npm test                                 # run Vitest tests (14 tests)
 ```
 
 ### Deployment & CI
@@ -42,29 +43,41 @@ Monorepo: Spring Boot backend + React frontend. Aggregates 10 RSS feeds (7 EN + 
 
 **Data flow:** `FeedScheduler` (every 12h + on startup) -> `FeedService.fetchAllFeeds()` -> `AiSummaryService.processUnprocessedArticles()`
 
-- **Entities:** `Article` (SHA-256 `urlHash` dedup, tags as JSON string, `language` field), `Feed` (`language` field, default "en")
+- **Entities:** `Article` (SHA-256 `urlHash` dedup, tags as JSON string, `language` field, `duplicateOfId`), `Feed` (`language` field, default "en", `failCount`, `lastError`, `disabledAt` for health tracking)
 - **Services:**
-  - `FeedService` — Rome 2.1.0 RSS parsing, URL dedup, seeds 10 default feeds via `@PostConstruct`, propagates `feed.language` to articles
-  - `AiSummaryService` — Claude API via `RestClient` with prompt caching. Strips HTML, truncates to 1000 chars, returns German summary + tags + category + sentiment as JSON. No-ops when `CLAUDE_API_KEY` is unset.
-  - `ArticleService` — paginated queries with category/search filtering, stats aggregation
+  - `FeedService` — Rome 2.1.0 RSS parsing, URL dedup, seeds 10 default feeds via `@PostConstruct`, propagates `feed.language` to articles. Tracks feed errors with auto-disable after 5 consecutive failures.
+  - `AiSummaryService` — Claude API via `RestClient` with prompt caching. Strips HTML, truncates to 1000 chars, returns German summary + tags + category + sentiment as JSON. No-ops when `CLAUDE_API_KEY` is unset. Runs `DuplicateDetectionService` after processing each article.
+  - `ArticleService` — paginated queries with category/search filtering, stats aggregation, stats history (per-source/sentiment breakdown)
+  - `TrendingService` — Clusters recent articles by category + tag Jaccard similarity (>=0.25), returns top 10 trending topics
+  - `DigestService` — Daily/weekly digest: top 3 articles per category, sorted by sentiment
+  - `DuplicateDetectionService` — Tag Jaccard (>=0.4) + trigram text similarity (>=0.3) to detect and mark duplicate articles within 48h
+- **Schedulers:**
+  - `FeedScheduler` — Every 12h + on startup, protected by AtomicBoolean guard
+  - `CleanupScheduler` — Daily at 3 AM, deletes articles older than `maschinenpost.retention.days` (default 90)
+- **Health:** `FeedHealthIndicator` — Actuator health check, DOWN if >50% feeds stale (>24h) or failing (>=3 errors)
 - **DTOs:** Records in `model/dto/` — `ArticleResponse` includes `rawContent` (HTML-stripped, truncated to 300 chars) as fallback when no AI summary
 - **Config:**
-  - `application.yml` — SQLite for local dev (`maschinenpost.db`), 12h fetch rate, max 256 output tokens
-  - `application-prod.yml` — PostgreSQL on `127.0.0.1:5432/maschinenpost`, port 3010, DB credentials via env vars
+  - `application.yml` — SQLite for local dev (`maschinenpost.db`), 12h fetch rate, max 256 output tokens, Actuator health/info endpoints
+  - `application-prod.yml` — PostgreSQL on `127.0.0.1:5432/maschinenpost`, port 3010, DB credentials via env vars, Actuator details hidden
 - **CORS:** Restricted to `maschinenpost.celox.io` + `localhost:5173` in `WebConfig`
-- **Caching:** Caffeine cache on `ArticleService.getStats()` with 30s TTL (`CacheConfig.java`). Stats are polled every 30s from frontend — cache prevents 5 DB queries per poll.
+- **Caching:** `CompositeCacheManager` in `CacheConfig.java` — stats cache at 30s TTL (polled from frontend), rssFeed + digest caches at 15min TTL.
+- **Rate limiting:** `POST /api/refresh` limited to 1 call per 10min per IP (in-memory `ConcurrentHashMap`)
 
 ### Frontend (`frontend/` — React 18, TypeScript 5.5, Vite 5, Tailwind 3.4)
 
 **State flows through `App.tsx`** — category/search state with hooks + props, no state library.
 
-- **Routing:** Hash-based via `useHashRoute` hook. Legal pages at `#/impressum`, `#/datenschutz`, `#/agb`. Scrolls to top on hash change.
-- **Hooks:** `useArticles` (paginated fetch, infinite scroll, page size 21 for 3-col grid), `useStats` (30s polling, new article detection), `useTheme` (dark/light in localStorage)
-- **API client:** `api/client.ts` — plain `fetch` wrapper. Vite proxy handles `/api/*` -> `:8080` in dev.
-- **Design system:** Industrial/brutalist dark theme. Colors under `machine.*` in `tailwind.config.js`. Custom CSS (`industrial-bg`, `glow-border`, `skeleton-shimmer`, `card-hover`) in `index.css`. Fonts: IBM Plex Mono (headlines) + DM Sans (body).
-- **Categories:** Fixed list in `api/types.ts` — `KI-Modelle, Robotik, Regulierung, Startups, Forschung, Hardware, Tools`.
+- **Routing:** Hash-based via `useHashRoute` hook. Pages: `#/impressum`, `#/datenschutz`, `#/agb`, `#/digest`, `#/stats`, `#/sources`, `#/article/:id`. Scrolls to top on hash change.
+- **Hooks:** `useArticles` (paginated fetch with language filter, infinite scroll, page size 21 for 3-col grid), `useStats` (30s polling, new article detection), `useTheme` (dark/light in localStorage), `useBookmarks` (localStorage bookmark set), `useReadHistory` (localStorage read tracking, max 500), `useKeyboardNav` (j/k/Enter/o/b/s/Escape/1-8), `useSwipe` (pointer events swipe detection)
+- **API client:** `api/client.ts` — plain `fetch` wrapper. Functions: `fetchArticles`, `fetchStats`, `fetchStatsHistory`, `fetchTrending`, `fetchDigest`, `reactivateFeed`. Vite proxy handles `/api/*` -> `:8080` in dev.
+- **Design system:** Industrial/brutalist dark theme. Colors under `machine.*` in `tailwind.config.js`. Custom CSS (`industrial-bg`, `glow-border`, `skeleton-shimmer`, `card-hover`, `keyboard-focus`) in `index.css`. Fonts: IBM Plex Mono (headlines) + DM Sans (body).
+- **Categories:** Fixed list in `api/types.ts` — `KI-Modelle, Robotik, Regulierung, Startups, Forschung, Hardware, Tools`. Plus special tabs: `Trending`, `Gespeichert` (bookmarks). Language toggle (Alle/DE/EN) in `CategoryFilter`, persisted in localStorage.
 - **Infinite scroll:** `ArticleGrid` uses `IntersectionObserver` (200px rootMargin) to auto-load next page.
-- **About modal:** `AboutModal` component opened via info icon in Header, shows app details and card anatomy.
+- **Pages:** `Digest` (daily/weekly magazine layout), `Stats` (bar charts, sentiment, source breakdown), `Sources` (feed health with green/yellow/red indicators + reactivate)
+- **Components:** `ArticleDetailModal` (full article view with nav + bookmark + related), `ErrorBoundary` (React class component with retry), `TrendingView` (trending topic clusters), `AboutModal` (app details + keyboard shortcuts)
+- **PWA:** `manifest.json` (standalone, dark theme), RSS `<link>` in index.html
+- **Embed:** `public/embed.js` — embeddable widget using safe DOM methods (no innerHTML)
+- **Testing:** Vitest + Testing Library (14 tests for useBookmarks, useReadHistory, useTheme)
 
 ### API Contract
 
@@ -72,12 +85,18 @@ All endpoints under `/api/`. Backend returns Spring `Page<T>` JSON for paginated
 
 | Endpoint | Notes |
 |---|---|
-| `GET /api/articles` | Query params: `page`, `size`, `category`, `search`, `sort` |
+| `GET /api/articles` | Query params: `page`, `size`, `category`, `search`, `sort`, `language` (`de`/`en`) |
 | `GET /api/articles/{id}` | |
+| `GET /api/articles/trending` | Query param: `hours` (default 48). Returns trending topic clusters |
+| `GET /api/articles/digest` | Query param: `period` (`daily`/`weekly`). Returns digest sections |
 | `GET /api/feeds` | |
 | `POST /api/feeds` | Body: `{ name, url }` |
+| `POST /api/feeds/{id}/reactivate` | Resets failCount and re-enables disabled feed |
 | `GET /api/stats` | Returns total counts + articlesPerCategory map |
-| `POST /api/refresh` | Async background refresh (not exposed in UI) |
+| `GET /api/stats/history` | Query param: `days` (default 30). Source/sentiment breakdown |
+| `POST /api/refresh` | Rate-limited (10min/IP). Async background refresh |
+| `GET /api/feed.xml` | RSS 2.0 output feed of last 50 articles (cached 15min) |
+| `GET /actuator/health` | Spring Boot Actuator health endpoint (feed staleness check) |
 
 ### Production Infrastructure
 
@@ -91,7 +110,9 @@ All endpoints under `/api/`. Backend returns Spring `Page<T>` JSON for paginated
 | SSL | Let's Encrypt via certbot |
 | Logrotate | `/etc/logrotate.d/maschinenpost` — daily, 7 days |
 
-## Tests (43 total, JUnit 5 + Mockito)
+## Tests
+
+### Backend (43 tests, JUnit 5 + Mockito)
 
 | Class | Tests | Covers |
 |---|---|---|
@@ -99,10 +120,20 @@ All endpoints under `/api/`. Backend returns Spring `Page<T>` JSON for paginated
 | `ArticleResponseTest` | 6 | DTO mapping, HTML stripping, truncation |
 | `FeedServiceTest` | 6 | Feed seeding (10 feeds), SHA-256 hashes |
 | `ArticleServiceTest` | 11 | Sorting, category/search routing, stats, 404 |
-| `AiSummaryServiceTest` | 7 | API-key check, AtomicBoolean guard, lock release |
+| `AiSummaryServiceTest` | 7 | API-key check, AtomicBoolean guard, lock release, DuplicateDetection mock |
 | `FeedSchedulerTest` | 5 | Concurrency guard, partial-failure recovery, lock release |
 
 All tests use mocks — no Spring context or DB needed. Run in <1s.
+
+### Frontend (14 tests, Vitest + Testing Library)
+
+| File | Tests | Covers |
+|---|---|---|
+| `useBookmarks.test.ts` | 5 | Toggle on/off, localStorage persistence/restore |
+| `useReadHistory.test.ts` | 5 | Mark read, no duplicates, localStorage persistence/restore |
+| `useTheme.test.ts` | 4 | Default dark, toggle, localStorage persistence/restore |
+
+Config: `vitest.config.ts` (separate from vite.config.ts for Vitest 4.x). Run with `npm test`.
 
 ## Concurrency Safety (CRITICAL)
 
@@ -134,7 +165,7 @@ The Claude API integration is cost-optimized:
 
 - **Language:** All UI text is in German. AI summaries, categories, sentiment values are German.
 - **Feed languages:** 7 English feeds + 3 German feeds. Language stored on both `Feed` and `Article` entities.
-- **Deduplication:** Articles deduplicated by SHA-256 hash of URL (`urlHash` column, UNIQUE constraint).
+- **Deduplication:** URL-level via SHA-256 hash (`urlHash` column, UNIQUE). Content-level via `DuplicateDetectionService` (tag Jaccard + trigram similarity), marks `duplicateOfId`.
 - **AI processing is optional:** Backend runs fine without `CLAUDE_API_KEY` — articles just lack summaries/tags/categories. Frontend shows `rawContent` excerpt as fallback.
 - **Database:** SQLite in dev (`maschinenpost.db`), PostgreSQL in prod. Hibernate `ddl-auto: update` in both.
 - **Sorting:** Default sort is by `publishedAt` DESC (not `createdAt`).
@@ -145,4 +176,7 @@ The Claude API integration is cost-optimized:
 - **DB indexes:** `Article` has indexes on `category`, `publishedAt`, `processed`, `createdAt`. Hibernate `ddl-auto: update` creates them automatically.
 - **Response compression:** Gzip enabled for JSON responses > 1KB (both dev and prod).
 - **Batch inserts:** Hibernate `batch_size: 50` + `order_inserts: true`. `FeedService.fetchFeed()` uses `saveAll()`.
-- **Mobile:** Header uses responsive tracking/font-size (`text-xl sm:text-2xl`). Cards use `overflow-hidden` + `p-4 sm:p-5`. Global `overflow-x: hidden` on html/body prevents horizontal scroll. Legal pages are lazy-loaded via `React.lazy()`.
+- **Mobile:** Header uses responsive tracking/font-size (`text-xl sm:text-2xl`). Cards use `overflow-hidden` + `p-4 sm:p-5`. Global `overflow-x: hidden` on html/body prevents horizontal scroll. Swipe gestures via `useSwipe` hook. Legal pages + Digest/Stats/Sources are lazy-loaded via `React.lazy()`.
+- **Keyboard shortcuts:** `j`/`k` (nav), `Enter`/`o` (open), `b` (bookmark), `s` (share), `Escape` (close), `1-8` (category tabs). Visual focus ring via `.keyboard-focus` CSS class.
+- **Feed health:** Auto-disable after 5 consecutive failures. Reactivate via `POST /api/feeds/{id}/reactivate` or Sources page UI. `failCount`, `lastError`, `disabledAt` tracked on `Feed` entity.
+- **Article retention:** Configurable via `maschinenpost.retention.days` (default 90). `CleanupScheduler` runs daily at 3 AM.

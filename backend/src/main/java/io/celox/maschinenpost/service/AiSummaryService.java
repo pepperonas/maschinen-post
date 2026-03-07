@@ -26,6 +26,7 @@ public class AiSummaryService {
 
     private final ArticleRepository articleRepository;
     private final ObjectMapper objectMapper;
+    private final DuplicateDetectionService duplicateDetectionService;
     private final AtomicBoolean processing = new AtomicBoolean(false);
 
     @Value("${maschinenpost.claude.api-key:}")
@@ -166,6 +167,7 @@ public class AiSummaryService {
                         fresh.setSentiment(result.sentiment());
                         fresh.setProcessed(true);
                         articleRepository.save(fresh);
+                        duplicateDetectionService.detectDuplicates(fresh);
                         log.info("Processed article: {}", fresh.getTitle());
                     }
 

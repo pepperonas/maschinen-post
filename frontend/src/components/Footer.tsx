@@ -14,7 +14,16 @@ export function Footer() {
           </a>
           <span className="dark:text-machine-text/40 text-gray-300"> | Powered by Claude AI</span>
         </p>
-        <div className="flex items-center gap-4 font-mono text-xs">
+        <div className="flex items-center gap-4 font-mono text-xs flex-wrap justify-center">
+          <a href="#/digest" className="dark:text-machine-text/60 text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors">
+            Digest
+          </a>
+          <a href="#/stats" className="dark:text-machine-text/60 text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors">
+            Statistiken
+          </a>
+          <a href="#/sources" className="dark:text-machine-text/60 text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors">
+            Quellen
+          </a>
           <a href="#/impressum" className="dark:text-machine-text/60 text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors">
             Impressum
           </a>

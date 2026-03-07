@@ -1,9 +1,16 @@
-import { memo } from 'react'
+import { memo, useCallback } from 'react'
 import type { Article } from '../api/types'
 import { timeAgo } from '../utils/timeAgo'
+import { useSwipe } from '../hooks/useSwipe'
 
 interface ArticleCardProps {
   article: Article
+  index?: number
+  isBookmarked?: boolean
+  isRead?: boolean
+  onToggleBookmark?: (id: number) => void
+  onMarkRead?: (id: number) => void
+  onSelect?: (article: Article) => void
 }
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -31,7 +38,28 @@ function formatSourceBadge(source: string): string {
     .toUpperCase()
 }
 
-export const ArticleCard = memo(function ArticleCard({ article }: ArticleCardProps) {
+function handleShare(article: Article) {
+  const shareData = {
+    title: article.title,
+    text: article.summary || article.title,
+    url: article.url,
+  }
+  if (navigator.share) {
+    navigator.share(shareData).catch(() => {})
+  } else {
+    navigator.clipboard.writeText(article.url).catch(() => {})
+  }
+}
+
+export const ArticleCard = memo(function ArticleCard({
+  article,
+  index,
+  isBookmarked,
+  isRead,
+  onToggleBookmark,
+  onMarkRead,
+  onSelect,
+}: ArticleCardProps) {
   const sourceColor =
     SOURCE_COLORS[article.source] ||
     'dark:bg-gray-500/20 dark:text-gray-400 bg-gray-100 text-gray-600'
@@ -39,8 +67,25 @@ export const ArticleCard = memo(function ArticleCard({ article }: ArticleCardPro
     ? SENTIMENT_CONFIG[article.sentiment]
     : null
 
+  const swipeHandlers = useSwipe({
+    onSwipeRight: onToggleBookmark ? () => onToggleBookmark(article.id) : undefined,
+    onSwipeLeft: onMarkRead ? () => onMarkRead(article.id) : undefined,
+  })
+
+  const handleTitleClick = useCallback((e: React.MouseEvent) => {
+    if (onSelect) {
+      e.preventDefault()
+      onSelect(article)
+    }
+    onMarkRead?.(article.id)
+  }, [article, onSelect, onMarkRead])
+
   return (
-    <article className="dark:bg-machine-surface bg-white border dark:border-machine-border border-gray-200 rounded-sm p-4 sm:p-5 glow-border card-hover animate-fade-in flex flex-col overflow-hidden">
+    <article
+      className={`dark:bg-machine-surface bg-white border dark:border-machine-border border-gray-200 rounded-sm p-4 sm:p-5 glow-border card-hover animate-fade-in flex flex-col overflow-hidden transition-opacity ${isRead ? 'opacity-60' : ''}`}
+      data-article-index={index}
+      {...swipeHandlers}
+    >
       {/* Top: Source + Category + Sentiment */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <span
@@ -67,7 +112,12 @@ export const ArticleCard = memo(function ArticleCard({ article }: ArticleCardPro
 
       {/* Title */}
       <h2 className="font-sans font-semibold dark:text-white text-gray-900 line-clamp-2 mb-2 leading-snug dark:hover:text-machine-accent hover:text-yellow-700 transition-colors">
-        <a href={article.url} target="_blank" rel="noopener noreferrer">
+        <a
+          href={onSelect ? '#' : article.url}
+          target={onSelect ? undefined : '_blank'}
+          rel={onSelect ? undefined : 'noopener noreferrer'}
+          onClick={handleTitleClick}
+        >
           {article.title}
         </a>
       </h2>
@@ -93,7 +143,7 @@ export const ArticleCard = memo(function ArticleCard({ article }: ArticleCardPro
         </div>
       )}
 
-      {/* Footer: flag, source, time + link */}
+      {/* Footer: flag, source, time + actions */}
       <div className="flex items-center justify-between pt-3 border-t dark:border-machine-border border-gray-100 mt-auto">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm shrink-0" title={article.language === 'de' ? 'Deutsch' : 'English'}>
@@ -106,27 +156,44 @@ export const ArticleCard = memo(function ArticleCard({ article }: ArticleCardPro
             {article.publishedAt ? timeAgo(article.publishedAt) : timeAgo(article.createdAt)}
           </span>
         </div>
-        <a
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-mono text-xs dark:text-machine-accent text-yellow-700 hover:underline inline-flex items-center gap-1 shrink-0 ml-2"
-        >
-          Lesen
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <div className="flex items-center gap-1 shrink-0 ml-2">
+          {/* Bookmark */}
+          {onToggleBookmark && (
+            <button
+              onClick={() => onToggleBookmark(article.id)}
+              className={`p-1 rounded transition-colors ${isBookmarked ? 'dark:text-machine-accent text-yellow-600' : 'dark:text-machine-muted text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700'}`}
+              aria-label={isBookmarked ? 'Lesezeichen entfernen' : 'Lesezeichen setzen'}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
+            </button>
+          )}
+          {/* Share */}
+          <button
+            onClick={() => handleShare(article)}
+            className="p-1 rounded dark:text-machine-muted text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors"
+            aria-label="Teilen"
           >
-            <line x1="7" y1="17" x2="17" y2="7" />
-            <polyline points="7 7 17 7 17 17" />
-          </svg>
-        </a>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+          </button>
+          {/* External link */}
+          <a
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1 rounded font-mono text-xs dark:text-machine-accent text-yellow-700 hover:underline inline-flex items-center gap-0.5"
+            onClick={() => onMarkRead?.(article.id)}
+          >
+            Lesen
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="7" y1="17" x2="17" y2="7" /><polyline points="7 7 17 7 17 17" />
+            </svg>
+          </a>
+        </div>
       </div>
     </article>
   )

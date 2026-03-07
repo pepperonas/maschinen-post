@@ -56,7 +56,7 @@ class ArticleServiceTest {
         Page<Article> page = new PageImpl<>(List.of(buildArticle(1L, "Test")));
         when(articleRepository.findAll(any(PageRequest.class))).thenReturn(page);
 
-        articleService.getArticles(0, 10, null, null, null);
+        articleService.getArticles(0, 10, null, null, null, null);
 
         ArgumentCaptor<PageRequest> captor = ArgumentCaptor.forClass(PageRequest.class);
         verify(articleRepository).findAll(captor.capture());
@@ -70,7 +70,7 @@ class ArticleServiceTest {
         Page<Article> page = new PageImpl<>(List.of(buildArticle(1L, "Test")));
         when(articleRepository.findAll(any(PageRequest.class))).thenReturn(page);
 
-        articleService.getArticles(0, 10, null, null, "latest");
+        articleService.getArticles(0, 10, null, null, "latest", null);
 
         ArgumentCaptor<PageRequest> captor = ArgumentCaptor.forClass(PageRequest.class);
         verify(articleRepository).findAll(captor.capture());
@@ -84,7 +84,7 @@ class ArticleServiceTest {
         Page<Article> page = new PageImpl<>(List.of());
         when(articleRepository.findByCategory(eq("Robotik"), any(PageRequest.class))).thenReturn(page);
 
-        articleService.getArticles(0, 10, "Robotik", null, null);
+        articleService.getArticles(0, 10, "Robotik", null, null, null);
 
         verify(articleRepository).findByCategory(eq("Robotik"), any(PageRequest.class));
         verify(articleRepository, never()).findAll(any(PageRequest.class));
@@ -95,7 +95,7 @@ class ArticleServiceTest {
         Page<Article> page = new PageImpl<>(List.of());
         when(articleRepository.search(eq("GPT"), any(PageRequest.class))).thenReturn(page);
 
-        articleService.getArticles(0, 10, null, "GPT", null);
+        articleService.getArticles(0, 10, null, "GPT", null, null);
 
         verify(articleRepository).search(eq("GPT"), any(PageRequest.class));
     }
@@ -105,7 +105,7 @@ class ArticleServiceTest {
         Page<Article> page = new PageImpl<>(List.of());
         when(articleRepository.searchByCategory(eq("GPT"), eq("KI-Modelle"), any(PageRequest.class))).thenReturn(page);
 
-        articleService.getArticles(0, 10, "KI-Modelle", "GPT", null);
+        articleService.getArticles(0, 10, "KI-Modelle", "GPT", null, null);
 
         verify(articleRepository).searchByCategory(eq("GPT"), eq("KI-Modelle"), any(PageRequest.class));
     }
@@ -115,7 +115,7 @@ class ArticleServiceTest {
         Page<Article> page = new PageImpl<>(List.of());
         when(articleRepository.findAll(any(PageRequest.class))).thenReturn(page);
 
-        articleService.getArticles(0, 10, "  ", "  ", null);
+        articleService.getArticles(0, 10, "  ", "  ", null, null);
 
         verify(articleRepository).findAll(any(PageRequest.class));
     }
@@ -127,7 +127,7 @@ class ArticleServiceTest {
         Page<Article> page = new PageImpl<>(List.of(article));
         when(articleRepository.findAll(any(PageRequest.class))).thenReturn(page);
 
-        Page<ArticleResponse> result = articleService.getArticles(0, 10, null, null, null);
+        Page<ArticleResponse> result = articleService.getArticles(0, 10, null, null, null, null);
 
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).title()).isEqualTo("Test Title");

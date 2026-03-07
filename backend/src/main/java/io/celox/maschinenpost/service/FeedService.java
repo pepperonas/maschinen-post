@@ -90,8 +90,21 @@ public class FeedService {
             try {
                 int newArticles = fetchFeed(feed);
                 totalNew += newArticles;
+                if (feed.getFailCount() > 0) {
+                    feed.setFailCount(0);
+                    feed.setLastError(null);
+                    feedRepository.save(feed);
+                }
             } catch (Exception e) {
                 log.error("Error fetching feed '{}' ({}): {}", feed.getName(), feed.getUrl(), e.getMessage());
+                feed.setFailCount(feed.getFailCount() + 1);
+                feed.setLastError(e.getMessage());
+                if (feed.getFailCount() >= 5) {
+                    feed.setActive(false);
+                    feed.setDisabledAt(LocalDateTime.now());
+                    log.warn("Feed '{}' disabled after {} consecutive failures", feed.getName(), feed.getFailCount());
+                }
+                feedRepository.save(feed);
             }
         }
         log.info("Feed fetch complete. {} new articles added.", totalNew);

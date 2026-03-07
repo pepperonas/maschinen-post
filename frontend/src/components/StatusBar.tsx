@@ -1,26 +1,11 @@
 import type { Stats } from '../api/types'
 import { timeAgo } from '../utils/timeAgo'
-import { refreshFeeds } from '../api/client'
-import { useState } from 'react'
 
 interface StatusBarProps {
   stats: Stats | null
 }
 
 export function StatusBar({ stats }: StatusBarProps) {
-  const [refreshing, setRefreshing] = useState(false)
-
-  const handleRefresh = async () => {
-    setRefreshing(true)
-    try {
-      await refreshFeeds()
-    } catch {
-      // silent
-    } finally {
-      setTimeout(() => setRefreshing(false), 2000)
-    }
-  }
-
   const isRecent =
     stats?.lastUpdate &&
     new Date().getTime() - new Date(stats.lastUpdate).getTime() < 300000
@@ -46,29 +31,6 @@ export function StatusBar({ stats }: StatusBarProps) {
             </span>
           )}
         </div>
-
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="font-mono text-[10px] dark:text-machine-muted text-gray-500 hover:text-machine-accent transition-colors disabled:opacity-50 flex items-center gap-1"
-        >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={refreshing ? 'animate-spin' : ''}
-          >
-            <polyline points="23 4 23 10 17 10" />
-            <polyline points="1 20 1 14 7 14" />
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-          </svg>
-          {refreshing ? 'Wird aktualisiert...' : 'Aktualisieren'}
-        </button>
       </div>
     </div>
   )

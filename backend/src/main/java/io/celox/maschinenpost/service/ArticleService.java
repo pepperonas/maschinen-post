@@ -14,11 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +25,7 @@ public class ArticleService {
     private final ArticleRepository articleRepository;
     private final FeedRepository feedRepository;
 
-    public Page<ArticleResponse> getArticles(int page, int size, String category, String search, String sort) {
+    public Page<ArticleResponse> getArticles(int page, int size, String category, String search, String sort, String language) {
         Sort sorting;
         if ("latest".equalsIgnoreCase(sort)) {
             sorting = Sort.by(Sort.Direction.DESC, "createdAt");
@@ -40,13 +38,22 @@ public class ArticleService {
         Page<Article> articles;
         boolean hasCategory = category != null && !category.isBlank();
         boolean hasSearch = search != null && !search.isBlank();
+        boolean hasLanguage = language != null && !language.isBlank();
 
-        if (hasCategory && hasSearch) {
+        if (hasCategory && hasSearch && hasLanguage) {
+            articles = articleRepository.searchByCategoryAndLanguage(search, category, language, pageRequest);
+        } else if (hasCategory && hasSearch) {
             articles = articleRepository.searchByCategory(search, category, pageRequest);
+        } else if (hasCategory && hasLanguage) {
+            articles = articleRepository.findByCategoryAndLanguage(category, language, pageRequest);
+        } else if (hasSearch && hasLanguage) {
+            articles = articleRepository.searchByLanguage(search, language, pageRequest);
         } else if (hasCategory) {
             articles = articleRepository.findByCategory(category, pageRequest);
         } else if (hasSearch) {
             articles = articleRepository.search(search, pageRequest);
+        } else if (hasLanguage) {
+            articles = articleRepository.findByLanguage(language, pageRequest);
         } else {
             articles = articleRepository.findAll(pageRequest);
         }
@@ -86,5 +93,30 @@ public class ArticleService {
                 lastUpdate,
                 articlesPerCategory
         );
+    }
+
+    public Map<String, Object> getStatsHistory(int days) {
+        LocalDateTime since = LocalDateTime.now().minusDays(days);
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        // Articles per source
+        Map<String, Long> perSource = new LinkedHashMap<>();
+        for (Object[] row : articleRepository.countBySource(since)) {
+            perSource.put((String) row[0], (Long) row[1]);
+        }
+        result.put("articlesPerSource", perSource);
+
+        // Sentiment distribution
+        Map<String, Long> sentiments = new LinkedHashMap<>();
+        for (Object[] row : articleRepository.countBySentiment(since)) {
+            sentiments.put((String) row[0], (Long) row[1]);
+        }
+        result.put("sentimentDistribution", sentiments);
+
+        // Total in period
+        result.put("totalInPeriod", articleRepository.countSince(since));
+        result.put("days", days);
+
+        return result;
     }
 }

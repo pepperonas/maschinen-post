@@ -130,4 +130,13 @@
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  .keyboard-focus {
+    outline: 2px solid #FFE000;
+    outline-offset: 2px;
+  }
+
+  html:not(.dark) .keyboard-focus {
+    outline-color: #1a1a1a;
+  }
 }

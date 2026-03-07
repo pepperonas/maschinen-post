@@ -49,6 +49,19 @@ export function Header({ stats, dark, onToggleTheme }: HeaderProps) {
             </div>
           )}
 
+          {/* RSS Feed */}
+          <a
+            href="/api/feed.xml"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded dark:text-machine-muted text-gray-500 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors"
+            aria-label="RSS Feed"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 11a9 9 0 0 1 9 9" /><path d="M4 4a16 16 0 0 1 16 16" /><circle cx="5" cy="19" r="1" />
+            </svg>
+          </a>
+
           {/* GitHub link */}
           <a
             href="https://github.com/pepperonas/maschinen-post"

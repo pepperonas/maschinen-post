@@ -24,13 +24,16 @@ class AiSummaryServiceTest {
     @Mock
     private ArticleRepository articleRepository;
 
+    @Mock
+    private DuplicateDetectionService duplicateDetectionService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private AiSummaryService aiSummaryService;
 
     @BeforeEach
     void setUp() throws Exception {
-        aiSummaryService = new AiSummaryService(articleRepository, objectMapper);
+        aiSummaryService = new AiSummaryService(articleRepository, objectMapper, duplicateDetectionService);
         // Set apiKey field via reflection (normally injected by Spring @Value)
         setField("apiKey", "");
     }

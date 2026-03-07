@@ -38,4 +38,15 @@ public class FeedController {
 
         return feedRepository.save(feed);
     }
+
+    @PostMapping("/{id}/reactivate")
+    public Feed reactivateFeed(@PathVariable Long id) {
+        Feed feed = feedRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Feed not found"));
+        feed.setActive(true);
+        feed.setFailCount(0);
+        feed.setLastError(null);
+        feed.setDisabledAt(null);
+        return feedRepository.save(feed);
+    }
 }

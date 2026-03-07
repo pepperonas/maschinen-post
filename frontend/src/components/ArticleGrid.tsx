@@ -11,6 +11,11 @@ interface ArticleGridProps {
   hasMore: boolean
   onLoadMore: () => void
   onRetry: () => void
+  isBookmarked?: (id: number) => boolean
+  isRead?: (id: number) => boolean
+  onToggleBookmark?: (id: number) => void
+  onMarkRead?: (id: number) => void
+  onSelectArticle?: (article: Article) => void
 }
 
 export function ArticleGrid({
@@ -21,6 +26,11 @@ export function ArticleGrid({
   hasMore,
   onLoadMore,
   onRetry,
+  isBookmarked,
+  isRead,
+  onToggleBookmark,
+  onMarkRead,
+  onSelectArticle,
 }: ArticleGridProps) {
   if (loading) {
     return (
@@ -90,8 +100,17 @@ export function ArticleGrid({
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {articles.map((article) => (
-          <ArticleCard key={article.id} article={article} />
+        {articles.map((article, idx) => (
+          <ArticleCard
+            key={article.id}
+            article={article}
+            index={idx}
+            isBookmarked={isBookmarked?.(article.id)}
+            isRead={isRead?.(article.id)}
+            onToggleBookmark={onToggleBookmark}
+            onMarkRead={onMarkRead}
+            onSelect={onSelectArticle}
+          />
         ))}
         {loadingMore &&
           Array.from({ length: 3 }).map((_, i) => (

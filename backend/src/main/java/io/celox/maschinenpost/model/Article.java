@@ -58,6 +58,8 @@ public class Article {
 
     private String sentiment;
 
+    private Long duplicateOfId;
+
     @Builder.Default
     private boolean processed = false;
 

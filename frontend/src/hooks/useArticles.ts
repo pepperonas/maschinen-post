@@ -10,6 +10,7 @@ interface UseArticlesOptions {
 export function useArticles(
   category: string,
   search: string,
+  language?: string,
   options: UseArticlesOptions = {},
 ) {
   const { size = 21, sort = 'published' } = options
@@ -42,6 +43,7 @@ export function useArticles(
           category,
           search,
           sort,
+          language,
         })
 
         if (controller.signal.aborted) return
@@ -64,7 +66,7 @@ export function useArticles(
         }
       }
     },
-    [category, search, size, sort],
+    [category, search, language, size, sort],
   )
 
   useEffect(() => {

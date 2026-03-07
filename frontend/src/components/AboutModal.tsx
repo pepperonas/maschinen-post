@@ -109,11 +109,43 @@ export function AboutModal({ open, onClose }: AboutModalProps) {
               Tags, Kategorien und Sentiment-Einordnungen.
             </p>
             <p className="font-sans text-sm dark:text-machine-text/90 text-gray-600 leading-relaxed mt-3">
-              Das Backend (Spring Boot) fetcht alle 3 Stunden neue Artikel und
-              dedupliziert sie per SHA-256 URL-Hash. Das Frontend (React) zeigt
-              die Ergebnisse in Echtzeit mit Infinite Scroll, Suche und
-              Kategorie-Filter.
+              Das Backend (Spring Boot) fetcht alle 12 Stunden neue Artikel und
+              dedupliziert sie per SHA-256 URL-Hash und Content-Similarity.
+              Das Frontend (React) zeigt die Ergebnisse mit Infinite Scroll,
+              Suche, Kategorie-Filter und Sprachfilter (DE/EN).
             </p>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t dark:border-machine-border border-gray-200" />
+
+          {/* Features */}
+          <div>
+            <h3 className="font-mono text-xs tracking-widest uppercase dark:text-machine-muted text-gray-400 mb-3">
+              Funktionen
+            </h3>
+            <div className="space-y-2">
+              {[
+                ['Sprachfilter', 'Umschalten zwischen deutschen, englischen oder allen Artikeln'],
+                ['Lesezeichen', 'Artikel lokal speichern und im Tab "Gespeichert" abrufen'],
+                ['Trending', 'KI-basiertes Clustering erkennt aktuelle Trendthemen'],
+                ['Tages-Digest', 'Kuratierte Zusammenfassung der Top-Artikel pro Kategorie'],
+                ['Statistiken', 'Dashboard mit Quellen-Verteilung und Sentiment-Analyse'],
+                ['Quellen-Monitor', 'Feed-Health mit automatischer Deaktivierung nach Fehlern'],
+                ['RSS-Feed', 'Eigener RSS-Feed zum Abonnieren in externen Readern'],
+                ['Duplikat-Erkennung', 'Trigram- und Tag-Similarity verhindert doppelte Artikel'],
+                ['PWA', 'Installierbar als App auf Desktop und Mobilgeraeten'],
+              ].map(([title, desc]) => (
+                <div key={title} className="flex items-start gap-2">
+                  <span className="shrink-0 mt-1 w-1 h-1 rounded-full dark:bg-machine-accent bg-gray-900" />
+                  <p className="font-sans text-sm dark:text-machine-text/80 text-gray-500">
+                    <span className="dark:text-white text-gray-900 font-medium">{title}</span>
+                    {' \u2014 '}
+                    {desc}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Divider */}
@@ -180,6 +212,31 @@ export function AboutModal({ open, onClose }: AboutModalProps) {
                   Sprache des Original-Artikels — die Zusammenfassung ist immer auf Deutsch
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Keyboard shortcuts */}
+          <div className="border-t dark:border-machine-border border-gray-200 pt-5">
+            <h3 className="font-mono text-xs tracking-widest uppercase dark:text-machine-muted text-gray-400 mb-3">
+              Tastatur-Shortcuts
+            </h3>
+            <div className="grid grid-cols-2 gap-1.5">
+              {[
+                ['j / k', 'Naechster / Voriger'],
+                ['Enter', 'Detail oeffnen'],
+                ['o', 'Original oeffnen'],
+                ['b', 'Lesezeichen'],
+                ['s / /', 'Suche'],
+                ['Esc', 'Schliessen'],
+                ['1-8', 'Kategorie'],
+              ].map(([key, desc]) => (
+                <div key={key} className="flex items-center gap-2">
+                  <kbd className="font-mono text-[10px] px-1.5 py-0.5 dark:bg-machine-border dark:text-machine-text/80 bg-gray-100 text-gray-600 rounded">
+                    {key}
+                  </kbd>
+                  <span className="font-sans text-xs dark:text-machine-text/60 text-gray-500">{desc}</span>
+                </div>
+              ))}
             </div>
           </div>
 

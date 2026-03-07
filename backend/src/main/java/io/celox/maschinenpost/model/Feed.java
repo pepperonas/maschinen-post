@@ -28,6 +28,14 @@ public class Feed {
     @Builder.Default
     private boolean active = true;
 
+    @Builder.Default
+    private int failCount = 0;
+
+    @Column(columnDefinition = "TEXT")
+    private String lastError;
+
+    private LocalDateTime disabledAt;
+
     private LocalDateTime lastFetchedAt;
 
     @Column(updatable = false)
