@@ -71,10 +71,10 @@ export function ArticleCard({ article }: ArticleCardProps) {
         </a>
       </h2>
 
-      {/* AI Summary */}
-      {article.summary && (
+      {/* AI Summary or raw content fallback */}
+      {(article.summary || article.rawContent) && (
         <p className="font-sans text-sm dark:text-machine-text/80 text-gray-600 italic line-clamp-3 mb-3 leading-relaxed flex-1">
-          {article.summary}
+          {article.summary || article.rawContent}
         </p>
       )}
 

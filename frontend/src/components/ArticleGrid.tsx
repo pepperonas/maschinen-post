@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { Article } from '../api/types'
 import { ArticleCard } from './ArticleCard'
 import { SkeletonCard } from './SkeletonCard'
@@ -98,15 +99,34 @@ export function ArticleGrid({
           ))}
       </div>
 
-      {hasMore && !loadingMore && (
-        <div className="flex justify-center mt-8">
-          <button
-            onClick={onLoadMore}
-            className="font-mono text-sm px-6 py-2.5 border dark:border-machine-accent border-gray-900 dark:text-machine-accent text-gray-900 dark:hover:bg-machine-accent dark:hover:text-black hover:bg-gray-900 hover:text-white rounded-sm transition-colors"
-          >
-            Mehr laden
-          </button>
-        </div>
+      {hasMore && <LoadMoreTrigger loading={loadingMore} onLoadMore={onLoadMore} />}
+    </div>
+  )
+}
+
+function LoadMoreTrigger({ loading, onLoadMore }: { loading: boolean; onLoadMore: () => void }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || loading) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) onLoadMore()
+      },
+      { rootMargin: '200px' },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [loading, onLoadMore])
+
+  return (
+    <div ref={ref} className="flex justify-center mt-8 py-4">
+      {loading && (
+        <span className="font-mono text-sm dark:text-machine-muted text-gray-500 animate-pulse">
+          Laden...
+        </span>
       )}
     </div>
   )

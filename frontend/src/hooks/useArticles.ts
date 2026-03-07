@@ -12,7 +12,7 @@ export function useArticles(
   search: string,
   options: UseArticlesOptions = {},
 ) {
-  const { size = 20, sort = 'published' } = options
+  const { size = 21, sort = 'published' } = options
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)

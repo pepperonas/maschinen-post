@@ -1,22 +1,17 @@
 spring:
-  application:
-    name: maschinenpost
   datasource:
-    url: jdbc:sqlite:maschinenpost.db
+    url: jdbc:sqlite::memory:
     driver-class-name: org.sqlite.JDBC
   jpa:
     database-platform: org.hibernate.community.dialect.SQLiteDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: false
-
-server:
-  port: 8080
 
 maschinenpost:
   claude:
-    api-key: ${CLAUDE_API_KEY:}
+    api-key:
     model: claude-haiku-4-5-20251001
-    max-tokens: 256
+    max-tokens: 512
   scheduler:
-    feed-fetch-rate: 43200000
+    feed-fetch-rate: 10800000

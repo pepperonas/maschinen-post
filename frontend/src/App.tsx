@@ -15,7 +15,10 @@ import { useTheme } from './hooks/useTheme'
 function useHashRoute() {
   const [hash, setHash] = useState(window.location.hash)
   useEffect(() => {
-    const onHashChange = () => setHash(window.location.hash)
+    const onHashChange = () => {
+      setHash(window.location.hash)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])

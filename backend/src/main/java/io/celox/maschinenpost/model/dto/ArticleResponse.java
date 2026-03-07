@@ -12,6 +12,7 @@ public record ArticleResponse(
         String source,
         String language,
         LocalDateTime publishedAt,
+        String rawContent,
         String summary,
         List<String> tags,
         String category,
@@ -28,6 +29,7 @@ public record ArticleResponse(
                 article.getSource(),
                 article.getLanguage(),
                 article.getPublishedAt(),
+                stripHtml(article.getRawContent()),
                 article.getSummary(),
                 article.getTagList(),
                 article.getCategory(),
@@ -36,5 +38,14 @@ public record ArticleResponse(
                 article.getCreatedAt(),
                 article.getUpdatedAt()
         );
+    }
+
+    private static String stripHtml(String html) {
+        if (html == null || html.isBlank()) return null;
+        String text = html.replaceAll("<[^>]*>", "").replaceAll("&[a-zA-Z]+;", " ").trim();
+        if (text.length() > 300) {
+            text = text.substring(0, 300) + "...";
+        }
+        return text.isBlank() ? null : text;
     }
 }

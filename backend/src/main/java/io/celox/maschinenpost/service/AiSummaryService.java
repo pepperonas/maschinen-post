@@ -39,20 +39,8 @@ public class AiSummaryService {
     private static final String CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
 
     private static final String SYSTEM_PROMPT = """
-            Du bist ein KI-Redakteur für MaschinenPost, ein deutschsprachiges Tech-Nachrichtenportal. \
-            Fasse den Artikel in 2-3 prägnanten deutschen Sätzen zusammen. \
-            Extrahiere 3-5 relevante Tags. \
-            Klassifiziere in GENAU EINE Kategorie: [KI-Modelle, Robotik, Regulierung, Startups, Forschung, Hardware, Tools]. \
-            Hinweise zur Kategorisierung: \
-            - Robotik: Roboter, Drohnen, Automatisierung, autonome Fahrzeuge, physische KI-Systeme, Sensoren, Aktuatoren, Boston Dynamics, humanoide Roboter \
-            - Hardware: Chips, GPUs, TPUs, Rechenzentren, Quantencomputer, Geräte \
-            - Regulierung: Gesetze, Vorschriften, Ethik, Datenschutz, Sicherheitspolitik, EU AI Act \
-            - Startups: Finanzierung, Fundraising, Gründungen, Series A/B/C, Übernahmen \
-            - Forschung: Wissenschaftliche Paper, Durchbrüche, Benchmarks, akademische Arbeiten \
-            - Tools: Software-Tools, APIs, Frameworks, Entwicklerprodukte, Plattformen \
-            - KI-Modelle: LLMs, Foundation Models, GPT, Claude, Gemini, Training, Fine-Tuning (nur wenn keine andere Kategorie besser passt) \
-            Gib Sentiment zurück: [positiv, neutral, kritisch]. \
-            Antwort als JSON: {"summary": "...", "tags": ["..."], "category": "...", "sentiment": "..."}""";
+            KI-Redakteur für MaschinenPost. Aufgabe: Artikel auf Deutsch zusammenfassen.\
+            Antwort NUR als JSON: {"summary":"2-3 Sätze","tags":["3-5 Tags"],"category":"EINE aus: KI-Modelle|Robotik|Regulierung|Startups|Forschung|Hardware|Tools","sentiment":"positiv|neutral|kritisch"}""";
 
     @PostConstruct
     public void init() {
@@ -68,17 +56,21 @@ public class AiSummaryService {
 
         try {
             String rawContent = article.getRawContent() != null ? article.getRawContent() : "";
-            // Truncate content aggressively to save tokens
-            if (rawContent.length() > 2000) {
-                rawContent = rawContent.substring(0, 2000) + "...";
+            // Strip HTML tags and entities to save tokens
+            rawContent = rawContent.replaceAll("<[^>]*>", " ").replaceAll("&[a-zA-Z]+;", " ").replaceAll("\\s+", " ").trim();
+            if (rawContent.length() > 1000) {
+                rawContent = rawContent.substring(0, 1000);
             }
 
-            String userMessage = "Titel: " + article.getTitle() + "\n\n" + rawContent;
+            String userMessage = article.getTitle() + "\n" + rawContent;
 
             Map<String, Object> requestBody = Map.of(
                     "model", model,
                     "max_tokens", maxTokens,
-                    "system", SYSTEM_PROMPT,
+                    "system", List.of(
+                            Map.of("type", "text", "text", SYSTEM_PROMPT,
+                                    "cache_control", Map.of("type", "ephemeral"))
+                    ),
                     "messages", List.of(
                             Map.of("role", "user", "content", userMessage)
                     )
@@ -89,6 +81,7 @@ public class AiSummaryService {
             String responseBody = restClient.post()
                     .header("x-api-key", apiKey)
                     .header("anthropic-version", "2023-06-01")
+                    .header("anthropic-beta", "prompt-caching-2024-07-31")
                     .header("Content-Type", "application/json")
                     .body(requestJson)
                     .retrieve()
