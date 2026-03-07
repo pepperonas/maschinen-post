@@ -1,4 +1,4 @@
-export function Impressum() {
+export default function Impressum() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 mb-14">
       <a href="/" className="font-mono text-sm dark:text-machine-accent text-yellow-700 hover:underline">&larr; Zurück</a>

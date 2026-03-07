@@ -40,12 +40,13 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator für Künstliche Intelligenz un
 - **Live-Updates** — 30s-Polling mit "Neue Artikel"-Banner
 - **Dark/Light Mode** — Theme-Wechsel in localStorage persistiert
 - **Industrial Dark UI** — Brutalist-Design mit IBM Plex Mono, Grid-Texturen, Electric Yellow (#FFE000) Akzenten
-- **Responsive** — Mobile-first mit 3-Spalten-Kartenraster
-- **Sprachanzeige** — Quellen und Sprache (EN/DE) auf jeder Karte sichtbar
+- **Responsive** — Mobile-first mit 3-Spalten-Kartenraster, optimiert für S24 Ultra und andere Geräte
+- **Sprachanzeige** — Flaggen-Emojis (DE/US) auf jeder Karte sichtbar
 - **Fallback-Beschreibungen** — Artikel ohne KI-Summary zeigen HTML-bereinigte Rohtext-Vorschau
 - **About-Modal** — App-Info, Card-Anatomie, Tech Stack und Links
 - **Rechtskonforme Seiten** — Impressum, Datenschutzerklärung, Nutzungsbedingungen
 - **CI/CD** — GitHub Actions Pipeline mit Backend-Tests und Frontend-Build
+- **Performance** — DB-Indexes, Caffeine Stats-Cache (30s TTL), Hibernate Batch-Inserts, Gzip-Kompression, Lazy-Loading
 - **Kostenoptimiert** — Haiku 4.5, HTML-Stripping, Content-Truncation, Prompt Caching, Concurrency-Guards
 
 ## Architektur
@@ -57,10 +58,11 @@ maschinen-post/
 │   ├── service/       FeedService (RSS), AiSummaryService (Claude), ArticleService
 │   ├── scheduler/     FeedScheduler (12-Stunden-Zyklus, Concurrency-sicher)
 │   ├── model/         JPA-Entities (Article, Feed) + DTOs
+│   ├── config/        CacheConfig (Caffeine), WebConfig (CORS)
 │   └── repository/    Spring Data JPA (SQLite dev / PostgreSQL prod)
 ├── frontend/          React 18 + TypeScript + Vite 5 + Tailwind CSS 3
 │   ├── components/    Header, ArticleCard, ArticleGrid, AboutModal, etc.
-│   ├── pages/         Impressum, Datenschutz, AGB (Hash-Routing)
+│   ├── pages/         Impressum, Datenschutz, AGB (Hash-Routing, Lazy-Loading)
 │   ├── hooks/         useArticles, useStats, useTheme
 │   └── api/           REST-Client + TypeScript-Types
 ├── .github/workflows/

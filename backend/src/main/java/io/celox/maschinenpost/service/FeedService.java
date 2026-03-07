@@ -20,6 +20,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -98,7 +99,6 @@ public class FeedService {
 
     public int fetchFeed(Feed feed) {
         log.info("Fetching feed: {} ({})", feed.getName(), feed.getUrl());
-        int newCount = 0;
 
         try {
             SyndFeedInput input = new SyndFeedInput();
@@ -106,6 +106,8 @@ public class FeedService {
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(10000);
             connection.setRequestProperty("User-Agent", "MaschinenPost/1.0");
+
+            List<Article> newArticles = new ArrayList<>();
 
             try (XmlReader reader = new XmlReader(connection)) {
                 SyndFeed syndFeed = input.build(reader);
@@ -149,23 +151,26 @@ public class FeedService {
                                 .processed(false)
                                 .build();
 
-                        articleRepository.save(article);
-                        newCount++;
+                        newArticles.add(article);
                     } catch (Exception e) {
                         log.warn("Error processing entry from feed '{}': {}", feed.getName(), e.getMessage());
                     }
                 }
             }
 
+            if (!newArticles.isEmpty()) {
+                articleRepository.saveAll(newArticles);
+            }
+
             feed.setLastFetchedAt(LocalDateTime.now());
             feedRepository.save(feed);
-            log.info("Feed '{}': {} new articles", feed.getName(), newCount);
+            log.info("Feed '{}': {} new articles", feed.getName(), newArticles.size());
 
+            return newArticles.size();
         } catch (Exception e) {
             log.error("Failed to fetch feed '{}': {}", feed.getName(), e.getMessage());
+            return 0;
         }
-
-        return newCount;
     }
 
     private String computeSha256(String input) {

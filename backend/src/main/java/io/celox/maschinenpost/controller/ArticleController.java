@@ -20,7 +20,8 @@ public class ArticleController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "latest") String sort) {
-        return articleService.getArticles(page, size, category, search, sort);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        return articleService.getArticles(page, safeSize, category, search, sort);
     }
 
     @GetMapping("/{id}")

@@ -17,9 +17,10 @@ echo "--- Building backend JAR ---"
 cd "$PROJECT_DIR/backend"
 mvn package -DskipTests -q
 
-JAR_FILE=$(ls target/maschinenpost-*.jar 2>/dev/null | head -1)
-if [ -z "$JAR_FILE" ]; then
-    echo "ERROR: No JAR file found in target/"
+JAR_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+JAR_FILE="target/maschinenpost-${JAR_VERSION}.jar"
+if [ ! -f "$JAR_FILE" ]; then
+    echo "ERROR: Expected JAR not found: $JAR_FILE"
     exit 1
 fi
 echo "JAR: $JAR_FILE"

@@ -1,16 +1,17 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react'
 import { Header } from './components/Header'
 import { SearchBar } from './components/SearchBar'
 import { CategoryFilter } from './components/CategoryFilter'
 import { ArticleGrid } from './components/ArticleGrid'
 import { NewArticlesBanner } from './components/NewArticlesBanner'
 import { Footer } from './components/Footer'
-import { Impressum } from './pages/Impressum'
-import { Datenschutz } from './pages/Datenschutz'
-import { AGB } from './pages/AGB'
 import { useArticles } from './hooks/useArticles'
 import { useStats } from './hooks/useStats'
 import { useTheme } from './hooks/useTheme'
+
+const Impressum = lazy(() => import('./pages/Impressum'))
+const Datenschutz = lazy(() => import('./pages/Datenschutz'))
+const AGB = lazy(() => import('./pages/AGB'))
 
 function useHashRoute() {
   const [hash, setHash] = useState(window.location.hash)
@@ -56,29 +57,15 @@ export default function App() {
   }, [])
 
   // Legal pages
-  if (hash === '#/impressum') {
+  if (hash === '#/impressum' || hash === '#/datenschutz' || hash === '#/agb') {
     return (
       <div className="min-h-screen industrial-bg font-sans">
         <Header stats={stats} dark={dark} onToggleTheme={toggleTheme} />
-        <Impressum />
-        <Footer />
-      </div>
-    )
-  }
-  if (hash === '#/datenschutz') {
-    return (
-      <div className="min-h-screen industrial-bg font-sans">
-        <Header stats={stats} dark={dark} onToggleTheme={toggleTheme} />
-        <Datenschutz />
-        <Footer />
-      </div>
-    )
-  }
-  if (hash === '#/agb') {
-    return (
-      <div className="min-h-screen industrial-bg font-sans">
-        <Header stats={stats} dark={dark} onToggleTheme={toggleTheme} />
-        <AGB />
+        <Suspense fallback={<div className="max-w-3xl mx-auto px-4 py-10" />}>
+          {hash === '#/impressum' && <Impressum />}
+          {hash === '#/datenschutz' && <Datenschutz />}
+          {hash === '#/agb' && <AGB />}
+        </Suspense>
         <Footer />
       </div>
     )

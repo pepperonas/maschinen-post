@@ -10,8 +10,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
+import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,13 +42,17 @@ public class AiSummaryService {
     private static final String CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
 
     private static final String SYSTEM_PROMPT = """
-            KI-Redakteur für MaschinenPost. Aufgabe: Artikel auf Deutsch zusammenfassen.\
-            Antwort NUR als JSON: {"summary":"2-3 Sätze","tags":["3-5 Tags"],"category":"EINE aus: KI-Modelle|Robotik|Regulierung|Startups|Forschung|Hardware|Tools","sentiment":"positiv|neutral|kritisch"}""";
+            KI-Redakteur für MaschinenPost. Fasse Artikel auf Deutsch zusammen — MAXIMAL 2 kurze, kompakte Sätze. Komprimiere Infos stark, keine Füllwörter.\
+            Antwort NUR als JSON: {"summary":"max 2 kurze Sätze","tags":["3-5 Tags"],"category":"EINE aus: KI-Modelle|Robotik|Regulierung|Startups|Forschung|Hardware|Tools","sentiment":"positiv|neutral|kritisch"}""";
 
     @PostConstruct
     public void init() {
         this.restClient = RestClient.builder()
                 .baseUrl(CLAUDE_API_URL)
+                .requestFactory(new JdkClientHttpRequestFactory(
+                        HttpClient.newBuilder()
+                                .connectTimeout(Duration.ofSeconds(10))
+                                .build()))
                 .build();
     }
 

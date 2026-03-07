@@ -16,21 +16,21 @@ export function Header({ stats, dark, onToggleTheme }: HeaderProps) {
 
   return (
     <>
-    <header className="border-b border-machine-border dark:border-machine-border border-gray-200">
+    <header className="border-b border-machine-border dark:border-machine-border border-gray-200 overflow-hidden">
       {/* Main header */}
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="font-mono font-bold text-2xl md:text-3xl tracking-[0.2em] dark:text-machine-accent text-gray-900 select-none">
+            <h1 className="font-mono font-bold text-xl sm:text-2xl md:text-3xl tracking-[0.08em] sm:tracking-[0.2em] dark:text-machine-accent text-gray-900 select-none">
               MASCHINENPOST
             </h1>
-            <p className="font-mono text-[10px] md:text-xs tracking-[0.3em] dark:text-machine-text/60 text-gray-500 mt-0.5">
+            <p className="font-mono text-[10px] md:text-xs tracking-[0.1em] sm:tracking-[0.3em] dark:text-machine-text/60 text-gray-500 mt-0.5">
               KI & ROBOTIK NACHRICHTEN
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           {/* Article counter + last update */}
           {stats && (
             <div className="hidden sm:flex items-center gap-2 font-mono text-xs dark:text-machine-text/70 text-gray-600">

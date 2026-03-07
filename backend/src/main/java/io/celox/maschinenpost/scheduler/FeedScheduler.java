@@ -37,8 +37,16 @@ public class FeedScheduler {
         }
         try {
             log.info("{} feed fetch started...", trigger);
-            feedService.fetchAllFeeds();
-            aiSummaryService.processUnprocessedArticles();
+            try {
+                feedService.fetchAllFeeds();
+            } catch (Exception e) {
+                log.error("Feed fetch failed: {}", e.getMessage());
+            }
+            try {
+                aiSummaryService.processUnprocessedArticles();
+            } catch (Exception e) {
+                log.error("AI processing failed: {}", e.getMessage());
+            }
             log.info("{} feed fetch complete.", trigger);
         } finally {
             running.set(false);

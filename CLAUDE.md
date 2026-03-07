@@ -28,7 +28,7 @@ npx tsc --noEmit                         # typecheck only
 ```bash
 bash scripts/deploy.sh                   # build + deploy to VPS (celox)
 ```
-The deploy script builds frontend + backend JAR, rsyncs to VPS, restarts systemd, and verifies. **Watch out:** `ls target/*.jar | head -1` picks the first JAR alphabetically — delete stale JARs from `target/` if builds change version.
+The deploy script builds frontend + backend JAR, rsyncs to VPS, restarts systemd, and verifies. JAR is resolved by Maven version (`mvn help:evaluate`).
 
 GitHub Actions CI runs on push/PR to `main`: `mvn test` (Java 17) + `npm run build` (Node 18).
 
@@ -51,7 +51,8 @@ Monorepo: Spring Boot backend + React frontend. Aggregates 10 RSS feeds (7 EN + 
 - **Config:**
   - `application.yml` — SQLite for local dev (`maschinenpost.db`), 12h fetch rate, max 256 output tokens
   - `application-prod.yml` — PostgreSQL on `127.0.0.1:5432/maschinenpost`, port 3010, DB credentials via env vars
-- **CORS:** Wide-open (`*`) in `WebConfig`
+- **CORS:** Restricted to `maschinenpost.celox.io` + `localhost:5173` in `WebConfig`
+- **Caching:** Caffeine cache on `ArticleService.getStats()` with 30s TTL (`CacheConfig.java`). Stats are polled every 30s from frontend — cache prevents 5 DB queries per poll.
 
 ### Frontend (`frontend/` — React 18, TypeScript 5.5, Vite 5, Tailwind 3.4)
 
@@ -90,6 +91,19 @@ All endpoints under `/api/`. Backend returns Spring `Page<T>` JSON for paginated
 | SSL | Let's Encrypt via certbot |
 | Logrotate | `/etc/logrotate.d/maschinenpost` — daily, 7 days |
 
+## Tests (43 total, JUnit 5 + Mockito)
+
+| Class | Tests | Covers |
+|---|---|---|
+| `ArticleTest` | 8 | Tag JSON serialization, Builder defaults |
+| `ArticleResponseTest` | 6 | DTO mapping, HTML stripping, truncation |
+| `FeedServiceTest` | 6 | Feed seeding (10 feeds), SHA-256 hashes |
+| `ArticleServiceTest` | 11 | Sorting, category/search routing, stats, 404 |
+| `AiSummaryServiceTest` | 7 | API-key check, AtomicBoolean guard, lock release |
+| `FeedSchedulerTest` | 5 | Concurrency guard, partial-failure recovery, lock release |
+
+All tests use mocks — no Spring context or DB needed. Run in <1s.
+
 ## Concurrency Safety (CRITICAL)
 
 All feed-fetching and AI-processing paths MUST go through `FeedScheduler.runFetchCycle()`. This method is protected by an `AtomicBoolean` guard that ensures only one fetch cycle runs at a time. **Never call `FeedService.fetchAllFeeds()` or `AiSummaryService.processUnprocessedArticles()` directly from new code paths** — always route through `FeedScheduler`.
@@ -127,4 +141,8 @@ The Claude API integration is cost-optimized:
 - **Lombok:** Backend uses `@Data`, `@Builder`, `@RequiredArgsConstructor`, `@Slf4j` throughout.
 - **Environment:** API key via `.env` file (gitignored) or `CLAUDE_API_KEY` env var.
 - **Light mode theming:** `text-machine-accent` (#FFE000 yellow) is unreadable on light backgrounds. Always use `dark:text-machine-accent text-yellow-700` (or `text-gray-900` for primary elements). Same pattern for `hover:`, `bg-`, and `border-` variants. Source badges use `-700`/`-100` pairs (e.g. `dark:text-blue-400 text-blue-700`).
-- **Page size:** Frontend uses 21 (divisible by 3 columns) for clean grid layout.
+- **Page size:** Frontend uses 21 (divisible by 3 columns) for clean grid layout. Backend clamps size to [1, 100].
+- **DB indexes:** `Article` has indexes on `category`, `publishedAt`, `processed`, `createdAt`. Hibernate `ddl-auto: update` creates them automatically.
+- **Response compression:** Gzip enabled for JSON responses > 1KB (both dev and prod).
+- **Batch inserts:** Hibernate `batch_size: 50` + `order_inserts: true`. `FeedService.fetchFeed()` uses `saveAll()`.
+- **Mobile:** Header uses responsive tracking/font-size (`text-xl sm:text-2xl`). Cards use `overflow-hidden` + `p-4 sm:p-5`. Global `overflow-x: hidden` on html/body prevents horizontal scroll. Legal pages are lazy-loaded via `React.lazy()`.

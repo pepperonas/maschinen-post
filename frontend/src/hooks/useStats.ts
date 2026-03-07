@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { Stats } from '../api/types'
 import { fetchStats } from '../api/client'
 
@@ -7,36 +7,57 @@ export function useStats(pollInterval = 30000) {
   const [loading, setLoading] = useState(true)
   const previousTotal = useRef<number>(0)
   const [newCount, setNewCount] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const load = useCallback(async () => {
+    try {
+      const data = await fetchStats()
+
+      if (previousTotal.current > 0 && data.totalArticles > previousTotal.current) {
+        setNewCount(data.totalArticles - previousTotal.current)
+      }
+      previousTotal.current = data.totalArticles
+
+      setStats(data)
+    } catch {
+      // silent fail for polling
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    let active = true
+    load()
 
-    const load = async () => {
-      try {
-        const data = await fetchStats()
-        if (!active) return
+    const startPolling = () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      intervalRef.current = setInterval(load, pollInterval)
+    }
 
-        if (previousTotal.current > 0 && data.totalArticles > previousTotal.current) {
-          setNewCount(data.totalArticles - previousTotal.current)
-        }
-        previousTotal.current = data.totalArticles
-
-        setStats(data)
-      } catch {
-        // silent fail for polling
-      } finally {
-        if (active) setLoading(false)
+    const stopPolling = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
 
-    load()
-    const interval = setInterval(load, pollInterval)
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling()
+      } else {
+        load()
+        startPolling()
+      }
+    }
+
+    startPolling()
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
     return () => {
-      active = false
-      clearInterval(interval)
+      stopPolling()
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [pollInterval])
+  }, [load, pollInterval])
 
   const dismissNew = () => {
     setNewCount(0)

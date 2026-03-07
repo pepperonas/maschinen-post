@@ -6,6 +6,7 @@ import io.celox.maschinenpost.model.dto.StatsResponse;
 import io.celox.maschinenpost.repository.ArticleRepository;
 import io.celox.maschinenpost.repository.FeedRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -59,6 +60,7 @@ public class ArticleService {
         return ArticleResponse.from(article);
     }
 
+    @Cacheable("stats")
     public StatsResponse getStats() {
         long totalArticles = articleRepository.count();
         long processedArticles = articleRepository.countByProcessedTrue();

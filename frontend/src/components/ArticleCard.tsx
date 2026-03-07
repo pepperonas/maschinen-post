@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Article } from '../api/types'
 import { timeAgo } from '../utils/timeAgo'
 
@@ -30,7 +31,7 @@ function formatSourceBadge(source: string): string {
     .toUpperCase()
 }
 
-export function ArticleCard({ article }: ArticleCardProps) {
+export const ArticleCard = memo(function ArticleCard({ article }: ArticleCardProps) {
   const sourceColor =
     SOURCE_COLORS[article.source] ||
     'dark:bg-gray-500/20 dark:text-gray-400 bg-gray-100 text-gray-600'
@@ -39,7 +40,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
     : null
 
   return (
-    <article className="dark:bg-machine-surface bg-white border dark:border-machine-border border-gray-200 rounded-sm p-5 glow-border card-hover animate-fade-in flex flex-col">
+    <article className="dark:bg-machine-surface bg-white border dark:border-machine-border border-gray-200 rounded-sm p-4 sm:p-5 glow-border card-hover animate-fade-in flex flex-col overflow-hidden">
       {/* Top: Source + Category + Sentiment */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <span
@@ -73,7 +74,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
 
       {/* AI Summary or raw content fallback */}
       {(article.summary || article.rawContent) && (
-        <p className="font-sans text-sm dark:text-machine-text/80 text-gray-600 italic line-clamp-3 mb-3 leading-relaxed flex-1">
+        <p className="font-sans text-sm dark:text-machine-text/80 text-gray-600 italic mb-3 leading-relaxed flex-1">
           {article.summary || article.rawContent}
         </p>
       )}
@@ -92,16 +93,16 @@ export function ArticleCard({ article }: ArticleCardProps) {
         </div>
       )}
 
-      {/* Footer: source, language, time + link */}
+      {/* Footer: flag, source, time + link */}
       <div className="flex items-center justify-between pt-3 border-t dark:border-machine-border border-gray-100 mt-auto">
-        <div className="flex items-center gap-2.5">
-          <span className="font-mono text-xs dark:text-machine-text/70 text-gray-500">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm shrink-0" title={article.language === 'de' ? 'Deutsch' : 'English'}>
+            {article.language === 'de' ? '\uD83C\uDDE9\uD83C\uDDEA' : '\uD83C\uDDFA\uD83C\uDDF8'}
+          </span>
+          <span className="font-mono text-xs dark:text-machine-text/70 text-gray-500 truncate">
             {article.source}
           </span>
-          <span className="font-mono text-[11px] uppercase px-1.5 py-0.5 rounded dark:bg-machine-border dark:text-machine-text/60 bg-gray-100 text-gray-500">
-            {article.language || 'en'}
-          </span>
-          <span className="font-mono text-xs dark:text-machine-text/50 text-gray-400">
+          <span className="font-mono text-xs dark:text-machine-text/50 text-gray-400 shrink-0">
             {article.publishedAt ? timeAgo(article.publishedAt) : timeAgo(article.createdAt)}
           </span>
         </div>
@@ -109,7 +110,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-mono text-xs dark:text-machine-accent text-yellow-700 hover:underline inline-flex items-center gap-1"
+          className="font-mono text-xs dark:text-machine-accent text-yellow-700 hover:underline inline-flex items-center gap-1 shrink-0 ml-2"
         >
           Lesen
           <svg
@@ -129,4 +130,4 @@ export function ArticleCard({ article }: ArticleCardProps) {
       </div>
     </article>
   )
-}
+})
