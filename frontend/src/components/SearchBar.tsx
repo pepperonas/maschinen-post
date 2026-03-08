@@ -63,7 +63,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
             setLocal('')
             onChange('')
           }}
-          className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-machine-muted text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors"
+          className="absolute right-1 top-1/2 -translate-y-1/2 p-2 dark:text-machine-muted text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors"
         >
           <svg
             width="14"

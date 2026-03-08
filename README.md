@@ -52,7 +52,7 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator fuer Kuenstliche Intelligenz un
 - **Lesezeichen** — Artikel lokal speichern, eigener "Gespeichert"-Tab
 - **Lesehistorie** — Gelesene Artikel werden abgedimmt dargestellt (max. 500 Eintraege)
 - **Artikel-Detail-Modal** — Vollansicht mit Navigation, verwandten Artikeln und Bookmark
-- **Tastatur-Shortcuts** — `j`/`k` Navigation, `Enter` Detail, `o` Original, `b` Bookmark, `s` Teilen, `Esc` Schliessen, `1-8` Kategorien
+- **Tastatur-Shortcuts** — `j`/`k` Navigation, `Enter` Detail, `o` Original, `b` Bookmark, `s`/`/` Suche, `Esc` Schliessen, `1-8` Kategorien
 - **Swipe-Gesten** — Wischen zum Bookmarken (rechts) und als gelesen markieren (links)
 - **Teilen-Buttons** — Web Share API mit Clipboard-Fallback
 - **PWA** — Installierbar als App auf Desktop und Mobilgeraeten
@@ -69,7 +69,7 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator fuer Kuenstliche Intelligenz un
 
 ### Design & Performance
 - **Industrial Dark UI** — Brutalist-Design mit IBM Plex Mono, Grid-Texturen, Electric Yellow (#FFE000)
-- **Responsive** — Mobile-first, 3-Spalten-Kartenraster, optimiert fuer verschiedene Geraete
+- **Smartphone-optimiert** — Bottom-Sheet-Modals, Safe-Area-Insets fuer Notch-Phones, 44px+ Touch-Targets, Hover nur auf Pointer-Geraeten, 3-Spalten-Raster (Desktop) / 1-Spalte (Mobile)
 - **Performance** — DB-Indexes, Caffeine-Cache (30s Stats / 15min Content), Batch-Inserts, Gzip, Lazy-Loading
 - **Kostenoptimiert** — Haiku 4.5, HTML-Stripping, Content-Truncation, Prompt Caching, Concurrency-Guards
 - **Rechtskonforme Seiten** — Impressum, Datenschutzerklaerung, Nutzungsbedingungen

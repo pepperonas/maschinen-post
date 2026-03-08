@@ -18,7 +18,7 @@ export function Header({ stats, dark, onToggleTheme }: HeaderProps) {
     <>
     <header className="border-b border-machine-border dark:border-machine-border border-gray-200 overflow-hidden">
       {/* Main header */}
-      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div>
             <h1 className="font-mono font-bold text-xl sm:text-2xl md:text-3xl tracking-[0.08em] sm:tracking-[0.2em] dark:text-machine-accent text-gray-900 select-none">

@@ -31,7 +31,7 @@ export function CategoryFilter({ active, onChange, stats, bookmarkCount = 0, lan
               key={opt.value}
               onClick={() => onLanguageChange(opt.value)}
               className={`
-                px-2 py-1.5 font-mono text-xs transition-all first:rounded-l-sm last:rounded-r-sm border-y border-r first:border-l
+                px-3 sm:px-2 py-2 sm:py-1.5 font-mono text-xs transition-all first:rounded-l-sm last:rounded-r-sm border-y border-r first:border-l
                 ${language === opt.value
                   ? 'dark:bg-machine-accent bg-gray-900 dark:text-black text-white dark:border-machine-accent border-gray-900 font-bold'
                   : 'dark:bg-machine-surface bg-white dark:text-machine-text/70 text-gray-600 dark:border-machine-border border-gray-200 dark:hover:text-machine-accent hover:text-gray-900'
@@ -65,7 +65,7 @@ export function CategoryFilter({ active, onChange, stats, bookmarkCount = 0, lan
             key={cat}
             onClick={() => onChange(cat)}
             className={`
-              flex-shrink-0 px-3 py-1.5 font-mono text-xs rounded-sm border transition-all
+              flex-shrink-0 px-3 py-2 sm:py-1.5 font-mono text-xs rounded-sm border transition-all
               ${
                 isActive
                   ? 'dark:bg-machine-accent bg-gray-900 dark:text-black text-white dark:border-machine-accent border-gray-900 font-bold'

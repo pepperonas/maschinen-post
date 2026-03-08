@@ -42,18 +42,18 @@ export function ArticleDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
       data-modal
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       <div
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-machine-surface bg-white border dark:border-machine-border border-gray-200 rounded-sm shadow-2xl animate-fade-in"
+        className="relative w-full max-w-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto dark:bg-machine-surface bg-white border-t sm:border dark:border-machine-border border-gray-200 rounded-t-xl sm:rounded-sm shadow-2xl animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 dark:bg-machine-surface bg-white border-b dark:border-machine-border border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+        <div className="sticky top-0 dark:bg-machine-surface bg-white border-b dark:border-machine-border border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
             <span className="text-sm">
               {article.language === 'de' ? '\uD83C\uDDE9\uD83C\uDDEA' : '\uD83C\uDDFA\uD83C\uDDF8'}
@@ -62,31 +62,31 @@ export function ArticleDetailModal({
               {article.source}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0 sm:gap-2">
             {onBookmark && (
               <button
                 onClick={() => onBookmark(article.id)}
-                className={`p-1.5 rounded transition-colors ${isBookmarked ? 'dark:text-machine-accent text-yellow-600' : 'dark:text-machine-muted text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700'}`}
+                className={`p-2.5 sm:p-1.5 rounded transition-colors ${isBookmarked ? 'dark:text-machine-accent text-yellow-600' : 'dark:text-machine-muted text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700'}`}
                 aria-label={isBookmarked ? 'Lesezeichen entfernen' : 'Lesezeichen setzen'}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                 </svg>
               </button>
             )}
             {onNavigate && (
               <>
-                <button onClick={() => onNavigate('prev')} className="p-1.5 rounded dark:text-machine-muted text-gray-400 dark:hover:text-white hover:text-gray-900 transition-colors" aria-label="Voriger Artikel">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+                <button onClick={() => onNavigate('prev')} className="p-2.5 sm:p-1.5 rounded dark:text-machine-muted text-gray-400 dark:hover:text-white hover:text-gray-900 transition-colors" aria-label="Voriger Artikel">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
                 </button>
-                <button onClick={() => onNavigate('next')} className="p-1.5 rounded dark:text-machine-muted text-gray-400 dark:hover:text-white hover:text-gray-900 transition-colors" aria-label="Naechster Artikel">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+                <button onClick={() => onNavigate('next')} className="p-2.5 sm:p-1.5 rounded dark:text-machine-muted text-gray-400 dark:hover:text-white hover:text-gray-900 transition-colors" aria-label="Naechster Artikel">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
                 </button>
               </>
             )}
             <button
               onClick={onClose}
-              className="p-1.5 rounded dark:text-machine-muted text-gray-400 dark:hover:text-white hover:text-gray-900 transition-colors"
+              className="p-2.5 sm:p-1.5 rounded dark:text-machine-muted text-gray-400 dark:hover:text-white hover:text-gray-900 transition-colors"
               aria-label="Schliessen"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -97,7 +97,7 @@ export function ArticleDetailModal({
           </div>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-4 sm:px-6 py-5 space-y-4">
           {/* Category + Sentiment */}
           <div className="flex items-center gap-2 flex-wrap">
             {article.category && (

@@ -156,15 +156,15 @@ export const ArticleCard = memo(function ArticleCard({
             {article.publishedAt ? timeAgo(article.publishedAt) : timeAgo(article.createdAt)}
           </span>
         </div>
-        <div className="flex items-center gap-1 shrink-0 ml-2">
+        <div className="flex items-center gap-0 sm:gap-1 shrink-0 ml-2">
           {/* Bookmark */}
           {onToggleBookmark && (
             <button
               onClick={() => onToggleBookmark(article.id)}
-              className={`p-1 rounded transition-colors ${isBookmarked ? 'dark:text-machine-accent text-yellow-600' : 'dark:text-machine-muted text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700'}`}
+              className={`p-2.5 sm:p-1 rounded transition-colors ${isBookmarked ? 'dark:text-machine-accent text-yellow-600' : 'dark:text-machine-muted text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700'}`}
               aria-label={isBookmarked ? 'Lesezeichen entfernen' : 'Lesezeichen setzen'}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
               </svg>
             </button>
@@ -172,10 +172,10 @@ export const ArticleCard = memo(function ArticleCard({
           {/* Share */}
           <button
             onClick={() => handleShare(article)}
-            className="p-1 rounded dark:text-machine-muted text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors"
+            className="p-2.5 sm:p-1 rounded dark:text-machine-muted text-gray-400 dark:hover:text-machine-accent hover:text-yellow-700 transition-colors"
             aria-label="Teilen"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
               <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
@@ -185,7 +185,7 @@ export const ArticleCard = memo(function ArticleCard({
             href={article.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-1 rounded font-mono text-xs dark:text-machine-accent text-yellow-700 hover:underline inline-flex items-center gap-0.5"
+            className="p-2.5 sm:p-1 rounded font-mono text-xs dark:text-machine-accent text-yellow-700 hover:underline inline-flex items-center gap-0.5"
             onClick={() => onMarkRead?.(article.id)}
           >
             Lesen
