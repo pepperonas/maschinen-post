@@ -75,7 +75,7 @@ Monorepo: Spring Boot backend + React frontend. Aggregates 10 RSS feeds (7 EN + 
 - **Infinite scroll:** `ArticleGrid` uses `IntersectionObserver` (200px rootMargin) to auto-load next page.
 - **Pages:** `Digest` (daily/weekly magazine layout), `Stats` (bar charts, sentiment, source breakdown), `Sources` (feed health with green/yellow/red indicators + reactivate)
 - **Components:** `ArticleDetailModal` (full article view with nav + bookmark + related), `ErrorBoundary` (React class component with retry), `TrendingView` (trending topic clusters), `AboutModal` (app details + keyboard shortcuts)
-- **PWA:** `manifest.json` (standalone, dark theme), RSS `<link>` in index.html
+- **PWA:** `vite-plugin-pwa` with Workbox `generateSW`. Precaches all static assets (22 files). Runtime caching: Google Fonts (CacheFirst, 1yr), API (NetworkFirst, 5min fallback). `registerType: 'autoUpdate'`. Manifest generated as `manifest.webmanifest`. PNG icons at 192/512px + SVG. Nginx serves `sw.js`/`manifest.webmanifest` with `no-cache` headers.
 - **Embed:** `public/embed.js` — embeddable widget using safe DOM methods (no innerHTML)
 - **Testing:** Vitest + Testing Library (14 tests for useBookmarks, useReadHistory, useTheme)
 

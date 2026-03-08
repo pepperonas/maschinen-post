@@ -55,7 +55,7 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator fuer Kuenstliche Intelligenz un
 - **Tastatur-Shortcuts** — `j`/`k` Navigation, `Enter` Detail, `o` Original, `b` Bookmark, `s`/`/` Suche, `Esc` Schliessen, `1-8` Kategorien
 - **Swipe-Gesten** — Wischen zum Bookmarken (rechts) und als gelesen markieren (links)
 - **Teilen-Buttons** — Web Share API mit Clipboard-Fallback
-- **PWA** — Installierbar als App auf Desktop und Mobilgeraeten
+- **PWA** — Installierbar als App auf Smartphone und Desktop mit Service Worker, Offline-Caching (Workbox), Auto-Update
 - **Embed-Widget** — Einbettbares JavaScript-Widget fuer externe Websites
 
 ### Zuverlaessigkeit & Monitoring
@@ -137,6 +137,7 @@ FeedScheduler (AtomicBoolean Guard)
 | Monitoring | Spring Boot Actuator + Custom Health Indicator  |
 | Tests      | JUnit 5 + Mockito (Backend), Vitest + Testing Library (Frontend) |
 | CI         | GitHub Actions (JUnit 5 + Vitest + Vite Build) |
+| PWA        | Workbox (vite-plugin-pwa), Precaching + Runtime Caching |
 | Deploy     | rsync + systemd + Nginx + Let's Encrypt        |
 
 ## RSS-Quellen
@@ -309,6 +310,21 @@ npm test
 | `useBookmarks.test.ts`  | Toggle on/off, localStorage Persistenz/Restore     |
 | `useReadHistory.test.ts`| Gelesen-Markierung, Deduplizierung, Persistenz     |
 | `useTheme.test.ts`      | Default Dark, Toggle, localStorage Persistenz      |
+
+## PWA Installation
+
+Die App kann als native App auf dem Smartphone installiert werden:
+
+**iPhone (Safari):**
+1. [maschinenpost.celox.io](https://maschinenpost.celox.io) in Safari oeffnen
+2. Teilen-Button (Quadrat mit Pfeil) tippen
+3. "Zum Home-Bildschirm" waehlen
+
+**Android (Chrome):**
+1. [maschinenpost.celox.io](https://maschinenpost.celox.io) in Chrome oeffnen
+2. "App installieren"-Banner antippen oder Menu → "App installieren"
+
+Die PWA cached statische Assets (JS, CSS, Fonts) lokal und nutzt NetworkFirst-Strategie fuer API-Daten mit 5-Minuten-Fallback-Cache.
 
 ## Tastatur-Shortcuts
 
