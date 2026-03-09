@@ -41,6 +41,7 @@ public class StatsController {
         if (lastRefresh != null && lastRefresh.plusSeconds(600).isAfter(Instant.now())) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Rate limit: max 1 refresh per 10 minutes");
         }
+        refreshRateLimit.entrySet().removeIf(e -> e.getValue().plusSeconds(600).isBefore(Instant.now()));
         refreshRateLimit.put(clientIp, Instant.now());
 
         log.info("Manual refresh triggered via API from {}", clientIp);

@@ -8,6 +8,7 @@ export default function Digest() {
   const [period, setPeriod] = useState<'daily' | 'weekly'>('daily')
   const [digest, setDigest] = useState<DigestResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -17,13 +18,19 @@ export default function Digest() {
       .finally(() => setLoading(false))
   }, [period])
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!digest) return
     const text = Object.entries(digest.sections)
       .map(([cat, articles]) =>
         `${cat}:\n${articles.map(a => `  - ${a.title} (${a.source})`).join('\n')}`)
       .join('\n\n')
-    navigator.clipboard.writeText(`MaschinenPost Digest\n\n${text}`)
+    try {
+      await navigator.clipboard.writeText(`MaschinenPost Digest\n\n${text}`)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Clipboard API not available (HTTP, permission denied, etc.)
+    }
   }
 
   return (
@@ -74,7 +81,7 @@ export default function Digest() {
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
               </svg>
-              Kopieren
+              {copied ? 'Kopiert!' : 'Kopieren'}
             </button>
           </div>
 

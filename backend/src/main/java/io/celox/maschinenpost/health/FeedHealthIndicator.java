@@ -27,6 +27,14 @@ public class FeedHealthIndicator implements HealthIndicator {
                 .filter(f -> f.getFailCount() >= 3)
                 .count();
 
+        if (activeFeeds.isEmpty()) {
+            return Health.down()
+                    .withDetail("totalFeeds", totalFeeds)
+                    .withDetail("activeFeeds", 0)
+                    .withDetail("reason", "No active feeds")
+                    .build();
+        }
+
         Health.Builder builder = (staleFeeds > activeFeeds.size() / 2 || failingFeeds > activeFeeds.size() / 2)
                 ? Health.down()
                 : Health.up();

@@ -137,7 +137,7 @@ export default function App() {
   // Related articles for detail modal
   const relatedArticles = selectedArticle
     ? displayArticles
-        .filter(a => a.id !== selectedArticle.id && a.category === selectedArticle.category)
+        .filter(a => a.id !== selectedArticle.id && selectedArticle.category != null && a.category === selectedArticle.category)
         .slice(0, 3)
     : []
 
