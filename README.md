@@ -51,7 +51,8 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator fuer Kuenstliche Intelligenz un
 ### User Experience
 - **Lesezeichen** — Artikel lokal speichern, eigener "Gespeichert"-Tab
 - **Lesehistorie** — Gelesene Artikel werden abgedimmt dargestellt (max. 500 Eintraege)
-- **Artikel-Detail-Modal** — Vollansicht mit Navigation, verwandten Artikeln und Bookmark
+- **Artikel-Detail-Modal** — Vollansicht mit Navigation, verwandten Artikeln, Bookmark und Scroll-Lock
+- **Browser-Navigation** — Zurueck-Button schliesst Modals korrekt, Hash-History fuer Deeplinks
 - **Tastatur-Shortcuts** — `j`/`k` Navigation, `Enter` Detail, `o` Original, `b` Bookmark, `s`/`/` Suche, `Esc` Schliessen, `1-8` Kategorien
 - **Swipe-Gesten** — Wischen zum Bookmarken (rechts) und als gelesen markieren (links)
 - **Teilen-Buttons** — Web Share API mit Clipboard-Fallback
@@ -69,8 +70,8 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator fuer Kuenstliche Intelligenz un
 
 ### Design & Performance
 - **Industrial Dark UI** — Brutalist-Design mit IBM Plex Mono, Grid-Texturen, Electric Yellow (#FFE000)
-- **Smartphone-optimiert** — Bottom-Sheet-Modals, Safe-Area-Insets fuer Notch-Phones, 44px+ Touch-Targets, Hover nur auf Pointer-Geraeten, 3-Spalten-Raster (Desktop) / 1-Spalte (Mobile)
-- **Performance** — DB-Indexes, Caffeine-Cache (30s Stats / 15min Content), Batch-Inserts, Gzip, Lazy-Loading
+- **Smartphone-optimiert** — Bottom-Sheet-Modals, Safe-Area-Insets fuer Notch-Phones, 44px+ Touch-Targets, Hover nur auf Pointer-Geraeten, Overscroll-Contain, 3-Spalten-Raster (Desktop) / 1-Spalte (Mobile)
+- **Performance** — DB-Indexes, Caffeine-Cache (30s Stats / 15min Content), Batch-Inserts, Gzip, Lazy-Loading, React.memo, Visibility-basiertes Polling
 - **Kostenoptimiert** — Haiku 4.5, HTML-Stripping, Content-Truncation, Prompt Caching, Concurrency-Guards
 - **Rechtskonforme Seiten** — Impressum, Datenschutzerklaerung, Nutzungsbedingungen
 

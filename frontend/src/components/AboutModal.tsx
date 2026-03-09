@@ -6,6 +6,15 @@ interface AboutModalProps {
 }
 
 export function AboutModal({ open, onClose }: AboutModalProps) {
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (!open) return
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.documentElement.style.overflow = ''
+    }
+  }, [open])
+
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -21,11 +30,11 @@ export function AboutModal({ open, onClose }: AboutModalProps) {
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm touch-none" />
 
       {/* Modal */}
       <div
-        className="relative w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] overflow-y-auto dark:bg-machine-surface bg-white border-t sm:border dark:border-machine-border border-gray-200 rounded-t-xl sm:rounded-sm shadow-2xl animate-fade-in"
+        className="relative w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] overflow-y-auto overscroll-contain dark:bg-machine-surface bg-white border-t sm:border dark:border-machine-border border-gray-200 rounded-t-xl sm:rounded-sm shadow-2xl animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

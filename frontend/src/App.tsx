@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from 'react'
+import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react'
 import { Header } from './components/Header'
 import { SearchBar } from './components/SearchBar'
 import { CategoryFilter } from './components/CategoryFilter'
@@ -26,13 +26,27 @@ const Sources = lazy(() => import('./pages/Sources'))
 
 function useHashRoute() {
   const [hash, setHash] = useState(window.location.hash)
+  const prevRef = useRef(window.location.hash)
+
   useEffect(() => {
-    const onHashChange = () => {
-      setHash(window.location.hash)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    const update = () => {
+      const prev = prevRef.current
+      const next = window.location.hash
+      if (prev === next) return
+      prevRef.current = next
+      setHash(next)
+      // Only scroll to top for page navigation, not modal open/close
+      const isModalTransition = prev.startsWith('#/article/') || next.startsWith('#/article/')
+      if (!isModalTransition) {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     }
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
+    window.addEventListener('hashchange', update)
+    window.addEventListener('popstate', update)
+    return () => {
+      window.removeEventListener('hashchange', update)
+      window.removeEventListener('popstate', update)
+    }
   }, [])
   return hash
 }
@@ -91,10 +105,20 @@ export default function App() {
 
   const handleCloseDetail = useCallback(() => {
     setSelectedArticle(null)
-    // Restore hash without article
     if (window.location.hash.startsWith('#/article/')) {
-      window.location.hash = ''
+      history.back()
     }
+  }, [])
+
+  // Close modal on browser back button
+  useEffect(() => {
+    const onPopState = () => {
+      if (!window.location.hash.startsWith('#/article/')) {
+        setSelectedArticle(null)
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
   const handleNavigateArticle = useCallback((direction: 'prev' | 'next') => {
@@ -106,6 +130,7 @@ export default function App() {
       const next = displayArticles[newIdx]
       setSelectedArticle(next)
       markRead(next.id)
+      history.replaceState({ articleModal: next.id }, '', `#/article/${next.id}`)
     }
   }, [selectedArticle, displayArticles, markRead])
 

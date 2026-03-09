@@ -25,6 +25,15 @@ export function ArticleDetailModal({
   relatedArticles = [],
   onNavigate,
 }: ArticleDetailModalProps) {
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (!article) return
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.documentElement.style.overflow = ''
+    }
+  }, [article])
+
   useEffect(() => {
     if (!article) return
     const onKey = (e: KeyboardEvent) => {
@@ -46,10 +55,10 @@ export function ArticleDetailModal({
       onClick={onClose}
       data-modal
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm touch-none" />
 
       <div
-        className="relative w-full max-w-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto dark:bg-machine-surface bg-white border-t sm:border dark:border-machine-border border-gray-200 rounded-t-xl sm:rounded-sm shadow-2xl animate-fade-in"
+        className="relative w-full max-w-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto overscroll-contain dark:bg-machine-surface bg-white border-t sm:border dark:border-machine-border border-gray-200 rounded-t-xl sm:rounded-sm shadow-2xl animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
