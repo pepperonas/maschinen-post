@@ -156,9 +156,10 @@ Additional safeguards:
 
 The Claude API integration is cost-optimized:
 - **Model:** Haiku 4.5 (`claude-haiku-4-5-20251001`) — do NOT switch to Sonnet/Opus without explicit approval (5-50x cost difference)
-- **Input:** rawContent HTML-stripped, truncated to 1000 chars, compact system prompt (~80 tokens)
+- **Input:** rawContent HTML-stripped (tags, entities, URLs, boilerplate), truncated to 600 chars, compact system prompt (~80 tokens)
 - **Output:** max 256 tokens (JSON response is typically ~150-200 tokens)
 - **Prompt caching:** Enabled via `anthropic-beta: prompt-caching-2024-07-31` header + `cache_control: ephemeral` on system message. System prompt cached after first call (90% cheaper for subsequent calls in same batch).
+- **Title dedup:** Before API call, trigram Jaccard similarity (>=0.5) against recently processed articles. Skips API entirely for similar titles, marks as duplicate.
 - **Fetch rate:** 12h intervals to reduce total API calls
 
 ## Key Conventions

@@ -15,8 +15,8 @@ import org.springframework.web.client.RestClient;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
@@ -35,7 +35,7 @@ public class AiSummaryService {
     @Value("${maschinenpost.claude.model:claude-haiku-4-5-20251001}")
     private String model;
 
-    @Value("${maschinenpost.claude.max-tokens:512}")
+    @Value("${maschinenpost.claude.max-tokens:256}")
     private int maxTokens;
 
     private RestClient restClient;
@@ -64,10 +64,9 @@ public class AiSummaryService {
 
         try {
             String rawContent = article.getRawContent() != null ? article.getRawContent() : "";
-            // Strip HTML tags and entities to save tokens
-            rawContent = rawContent.replaceAll("<[^>]*>", " ").replaceAll("&[a-zA-Z]+;", " ").replaceAll("\\s+", " ").trim();
-            if (rawContent.length() > 1000) {
-                rawContent = rawContent.substring(0, 1000);
+            rawContent = stripContent(rawContent);
+            if (rawContent.length() > 600) {
+                rawContent = rawContent.substring(0, 600);
             }
 
             String userMessage = article.getTitle() + "\n" + rawContent;
@@ -96,6 +95,15 @@ public class AiSummaryService {
                     .body(String.class);
 
             Map<String, Object> response = objectMapper.readValue(responseBody, new TypeReference<>() {});
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> usage = (Map<String, Object>) response.get("usage");
+            if (usage != null) {
+                log.debug("Token usage for '{}': input={}, output={}",
+                        article.getTitle(),
+                        usage.get("input_tokens"),
+                        usage.get("output_tokens"));
+            }
 
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> content = (List<Map<String, Object>>) response.get("content");
@@ -153,10 +161,28 @@ public class AiSummaryService {
 
             log.info("Processing {} unprocessed articles with AI...", unprocessed.size());
 
+            // Load recent processed articles for title dedup
+            List<Article> recentProcessed = articleRepository.findRecentProcessed(
+                    LocalDateTime.now().minusHours(72));
+            int skipped = 0;
+
             for (Article article : unprocessed) {
                 // Re-fetch from DB to check if another thread already processed it
                 Article fresh = articleRepository.findById(article.getId()).orElse(null);
                 if (fresh == null || fresh.isProcessed()) continue;
+
+                // Pre-API title dedup: skip API call if a very similar title was already processed
+                Article titleMatch = findTitleMatch(fresh.getTitle(), recentProcessed);
+                if (titleMatch != null) {
+                    fresh.setCategory(titleMatch.getCategory());
+                    fresh.setSentiment(titleMatch.getSentiment());
+                    fresh.setDuplicateOfId(titleMatch.getId());
+                    fresh.setProcessed(true);
+                    articleRepository.save(fresh);
+                    skipped++;
+                    log.info("Skipped API call — title similar to '{}': {}", titleMatch.getTitle(), fresh.getTitle());
+                    continue;
+                }
 
                 try {
                     AiProcessingResult result = processArticle(fresh);
@@ -167,6 +193,7 @@ public class AiSummaryService {
                         fresh.setSentiment(result.sentiment());
                         fresh.setProcessed(true);
                         articleRepository.save(fresh);
+                        recentProcessed.add(fresh);
                         duplicateDetectionService.detectDuplicates(fresh);
                         log.info("Processed article: {}", fresh.getTitle());
                     }
@@ -181,9 +208,60 @@ public class AiSummaryService {
                 }
             }
 
-            log.info("AI processing complete.");
+            log.info("AI processing complete. {} articles skipped via title dedup.", skipped);
         } finally {
             processing.set(false);
         }
+    }
+
+    /**
+     * Strip HTML, URLs, boilerplate and normalize whitespace from raw content.
+     */
+    static String stripContent(String raw) {
+        return raw
+                .replaceAll("<[^>]*>", " ")                           // HTML tags
+                .replaceAll("&[a-zA-Z#0-9]+;", " ")                  // HTML entities
+                .replaceAll("https?://\\S+", "")                      // URLs
+                .replaceAll("(?i)(read more|continue reading|weiterlesen|mehr erfahren)\\W*$", "")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    /**
+     * Find a recently processed article with a very similar title (trigram Jaccard >= 0.5).
+     */
+    private Article findTitleMatch(String title, List<Article> candidates) {
+        Set<String> trigrams = trigrams(normalizeTitle(title));
+        if (trigrams.size() < 3) return null;
+
+        for (Article candidate : candidates) {
+            if (candidate.getSummary() == null) continue;
+            Set<String> candidateTrigrams = trigrams(normalizeTitle(candidate.getTitle()));
+            if (jaccardSimilarity(trigrams, candidateTrigrams) >= 0.5) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private static String normalizeTitle(String title) {
+        return title.toLowerCase().replaceAll("[^a-z0-9äöüß ]", "").trim();
+    }
+
+    private static Set<String> trigrams(String text) {
+        Set<String> result = new HashSet<>();
+        for (int i = 0; i <= text.length() - 3; i++) {
+            result.add(text.substring(i, i + 3));
+        }
+        return result;
+    }
+
+    private static double jaccardSimilarity(Set<String> a, Set<String> b) {
+        if (a.isEmpty() && b.isEmpty()) return 0;
+        Set<String> intersection = new HashSet<>(a);
+        intersection.retainAll(b);
+        Set<String> union = new HashSet<>(a);
+        union.addAll(b);
+        return union.isEmpty() ? 0 : (double) intersection.size() / union.size();
     }
 }
