@@ -45,7 +45,7 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator fuer Kuenstliche Intelligenz un
 ### Content Intelligence
 - **Trending-Erkennung** — Tag-basiertes Jaccard-Clustering erkennt aktuelle Trendthemen automatisch
 - **Tages-/Wochen-Digest** — Kuratierte Top-Artikel pro Kategorie als Magazin-Layout
-- **Duplikaterkennung** — Trigram- und Tag-Similarity (Jaccard) markiert inhaltlich doppelte Artikel
+- **Duplikaterkennung** — Dreistufig: URL-Hash (SHA-256), Pre-API Titel-Dedup (Trigram-Jaccard), Post-API Content-Dedup (Tag- + Trigram-Similarity)
 - **RSS-Ausgabe** — Eigener RSS 2.0 Feed (`/api/feed.xml`) zum Abonnieren in externen Readern
 
 ### User Experience
@@ -72,7 +72,7 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator fuer Kuenstliche Intelligenz un
 - **Industrial Dark UI** — Brutalist-Design mit IBM Plex Mono, Grid-Texturen, Electric Yellow (#FFE000)
 - **Smartphone-optimiert** — Bottom-Sheet-Modals, Safe-Area-Insets fuer Notch-Phones, 44px+ Touch-Targets, Hover nur auf Pointer-Geraeten, Overscroll-Contain, 3-Spalten-Raster (Desktop) / 1-Spalte (Mobile)
 - **Performance** — DB-Indexes, Caffeine-Cache (30s Stats / 15min Content), Batch-Inserts, Gzip, Lazy-Loading, React.memo, Visibility-basiertes Polling
-- **Kostenoptimiert** — Haiku 4.5, HTML-Stripping, Content-Truncation, Prompt Caching, Concurrency-Guards
+- **Kostenoptimiert** — Haiku 4.5, HTML/URL/Boilerplate-Stripping, Content-Truncation (600 Zeichen), Prompt Caching, Title-Dedup, Concurrency-Guards
 - **Rechtskonforme Seiten** — Impressum, Datenschutzerklaerung, Nutzungsbedingungen
 
 ## Architektur
@@ -118,7 +118,10 @@ FeedScheduler (AtomicBoolean Guard)
             │       └── Fehler-Tracking: failCount++, auto-disable nach 5 Fehlern
             │
             └── AiSummaryService.processUnprocessedArticles() [AtomicBoolean Guard]
-                    ├── Pro Artikel: DB re-fetch → HTML strip → Claude API
+                    ├── Titel-Dedup: Trigram-Jaccard gegen letzte 72h
+                    │   → Bei Treffer: API-Call uebersprungen, als Duplikat markiert
+                    ├── Pro Artikel: DB re-fetch → HTML/URL/Boilerplate strip
+                    │   → Content auf 600 Zeichen → Claude API
                     │   → Summary/Tags/Kategorie/Sentiment speichern
                     └── DuplicateDetectionService.detectDuplicates()
                             └── Tag-Jaccard + Trigram-Similarity → duplicateOfId setzen
@@ -269,8 +272,9 @@ Anwendungskonfiguration in `backend/src/main/resources/application.yml`:
 Die App minimiert Claude-API-Kosten durch mehrere Massnahmen:
 
 - **Modell:** Haiku 4.5 — 5-50x guenstiger als Sonnet/Opus
-- **HTML-Stripping:** Vor dem API-Call werden HTML-Tags und Entities entfernt, nur Reintext gesendet
-- **Content-Truncation:** Artikelinhalt auf 1000 Zeichen begrenzt
+- **Content-Stripping:** HTML-Tags, Entities, URLs und Boilerplate ("Read more...", "Weiterlesen") werden vor dem API-Call entfernt
+- **Content-Truncation:** Artikelinhalt auf 600 Zeichen begrenzt (Titel + erster Absatz genuegt fuer Kategorisierung)
+- **Titel-Dedup:** Vor dem API-Call Trigram-Jaccard-Vergleich gegen kuerzlich verarbeitete Artikel — bei aehnlichem Titel wird der API-Call komplett uebersprungen
 - **Kompakter System Prompt:** ~80 Tokens, Kategorien werden nicht aufgezaehlt
 - **Max Tokens:** Antwort auf 256 Tokens limitiert (JSON ist typischerweise ~150-200 Tokens)
 - **Prompt Caching:** System Prompt via `cache_control: ephemeral` gecacht — 90% guenstiger ab dem 2. Artikel
@@ -278,7 +282,7 @@ Die App minimiert Claude-API-Kosten durch mehrere Massnahmen:
 - **Concurrency Guards:** `AtomicBoolean`-Locks verhindern doppelte API-Calls
 - **DB-Recheck:** Jeder Artikel wird vor dem Claude-Call erneut aus der DB geladen
 - **Throttling:** 1000ms Pause zwischen API-Calls
-- **Duplikaterkennung:** Inhaltlich gleiche Artikel werden nur einmal verarbeitet
+- **Content-Duplikaterkennung:** Tag-Jaccard + Trigram-Similarity nach dem API-Call markiert inhaltliche Duplikate
 
 ## Tests
 

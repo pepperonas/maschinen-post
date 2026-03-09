@@ -46,7 +46,7 @@ Monorepo: Spring Boot backend + React frontend. Aggregates 10 RSS feeds (7 EN + 
 - **Entities:** `Article` (SHA-256 `urlHash` dedup, tags as JSON string, `language` field, `duplicateOfId`), `Feed` (`language` field, default "en", `failCount`, `lastError`, `disabledAt` for health tracking)
 - **Services:**
   - `FeedService` — Rome 2.1.0 RSS parsing, URL dedup, seeds 10 default feeds via `@PostConstruct`, propagates `feed.language` to articles. Tracks feed errors with auto-disable after 5 consecutive failures.
-  - `AiSummaryService` — Claude API via `RestClient` with prompt caching. Strips HTML, truncates to 1000 chars, returns German summary + tags + category + sentiment as JSON. No-ops when `CLAUDE_API_KEY` is unset. Runs `DuplicateDetectionService` after processing each article.
+  - `AiSummaryService` — Claude API via `RestClient` with prompt caching. Strips HTML/URLs/boilerplate, truncates to 600 chars, returns German summary + tags + category + sentiment as JSON. Pre-API title dedup via trigram Jaccard (>=0.5) skips API calls for similar titles. No-ops when `CLAUDE_API_KEY` is unset. Runs `DuplicateDetectionService` after processing each article. Logs token usage per article at DEBUG level.
   - `ArticleService` — paginated queries with category/search filtering, stats aggregation, stats history (per-source/sentiment breakdown)
   - `TrendingService` — Clusters recent articles by category + tag Jaccard similarity (>=0.25), returns top 10 trending topics
   - `DigestService` — Daily/weekly digest: top 3 articles per category, sorted by sentiment
@@ -148,7 +148,8 @@ Additional safeguards:
 - `AiSummaryService.processUnprocessedArticles()` has its own `AtomicBoolean` lock as a second barrier
 - Each article is re-fetched from DB (`findById`) before Claude API call to verify it hasn't been processed by another thread
 - 1000ms delay between API calls to prevent burst billing
-- Article content HTML-stripped and truncated to 1000 chars to minimize input tokens
+- Article content HTML-stripped (tags, entities, URLs, boilerplate) and truncated to 600 chars to minimize input tokens
+- Pre-API title dedup: trigram Jaccard (>=0.5) against recently processed articles skips API calls entirely
 
 **Why:** A race condition between unguarded threads caused ~$5 in duplicate Claude API charges.
 
