@@ -49,7 +49,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     @Modifying
     @Transactional
     @Query("DELETE FROM Article a WHERE a.createdAt < :cutoff")
-    long deleteByCreatedAtBefore(@Param("cutoff") LocalDateTime cutoff);
+    int deleteByCreatedAtBefore(@Param("cutoff") LocalDateTime cutoff);
 
     @Query("SELECT a FROM Article a WHERE a.processed = true AND a.publishedAt > :since ORDER BY a.publishedAt DESC")
     List<Article> findRecentProcessed(@Param("since") LocalDateTime since);

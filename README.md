@@ -284,6 +284,17 @@ Die App minimiert Claude-API-Kosten durch mehrere Massnahmen:
 - **Throttling:** 1000ms Pause zwischen API-Calls
 - **Content-Duplikaterkennung:** Tag-Jaccard + Trigram-Similarity nach dem API-Call markiert inhaltliche Duplikate
 
+**Geschaetzte Kosten (Haiku 4.5):**
+
+| Posten            | Tokens/Artikel | Preis/1M Tokens | Kosten/Artikel |
+|-------------------|----------------|-----------------|----------------|
+| Input (Content)   | ~280           | $1.00           | $0.00028       |
+| Input (Cache-Hit) | ~80            | $0.10           | $0.000008      |
+| Output (JSON)     | ~180           | $5.00           | $0.0009        |
+| **Gesamt**        |                |                 | **~$0.0012**   |
+
+Bei ~25 Artikeln/Tag (nach Titel-Dedup): **~$0.03/Tag bzw. ~$0.90/Monat**
+
 ## Tests
 
 ### Backend (43 Tests, JUnit 5 + Mockito)

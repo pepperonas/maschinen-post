@@ -22,7 +22,7 @@ public class CleanupScheduler {
     @Scheduled(cron = "0 0 3 * * *")
     public void cleanupOldArticles() {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);
-        long deleted = articleRepository.deleteByCreatedAtBefore(cutoff);
+        int deleted = articleRepository.deleteByCreatedAtBefore(cutoff);
         if (deleted > 0) {
             log.info("Deleted {} articles older than {} days", deleted, retentionDays);
         }
