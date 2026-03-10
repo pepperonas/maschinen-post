@@ -17,7 +17,7 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/pepperonas/maschinen-post)](https://github.com/pepperonas/maschinen-post/commits/main)
 [![GitHub repo size](https://img.shields.io/github/repo-size/pepperonas/maschinen-post)](https://github.com/pepperonas/maschinen-post)
 
-Deutschsprachiger Echtzeit-Nachrichtenaggregator fuer Kuenstliche Intelligenz und Robotik mit automatischer RSS-Aggregation, Claude-gestuetzter Zusammenfassung, Trending-Analyse und Duplikaterkennung.
+Deutschsprachiger Echtzeit-Nachrichtenaggregator für Künstliche Intelligenz und Robotik mit automatischer RSS-Aggregation, Claude-gestützter Zusammenfassung, Trending-Analyse und Duplikaterkennung.
 
 **Live:** [maschinenpost.celox.io](https://maschinenpost.celox.io)
 
@@ -36,7 +36,7 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator fuer Kuenstliche Intelligenz un
 - **KI-Zusammenfassungen** — Claude Haiku 4.5 generiert deutsche Zusammenfassungen, Tags, Kategorien und Sentiment
 - **7 Kategorien** — KI-Modelle, Robotik, Regulierung, Startups, Forschung, Hardware, Tools
 - **Sentimentanalyse** — Visuelle Indikatoren pro Artikel (&#9650; positiv, &#9679; neutral, &#9660; kritisch)
-- **Volltextsuche** — Debounced-Suche ueber Titel und KI-Zusammenfassungen
+- **Volltextsuche** — Debounced-Suche über Titel und KI-Zusammenfassungen
 - **Sprachfilter** — Toggle zwischen deutschen, englischen oder allen Artikeln (DE/EN/Alle)
 - **Infinite Scroll** — Automatisches Nachladen via IntersectionObserver
 - **Live-Updates** — 30s-Polling mit "Neue Artikel"-Banner
@@ -50,19 +50,19 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator fuer Kuenstliche Intelligenz un
 
 ### User Experience
 - **Lesezeichen** — Artikel lokal speichern, eigener "Gespeichert"-Tab
-- **Lesehistorie** — Gelesene Artikel werden abgedimmt dargestellt (max. 500 Eintraege)
+- **Lesehistorie** — Gelesene Artikel werden abgedimmt dargestellt (max. 500 Einträge)
 - **Artikel-Detail-Modal** — Vollansicht mit Navigation, verwandten Artikeln, Bookmark und Scroll-Lock
-- **Browser-Navigation** — Zurueck-Button schliesst Modals korrekt, Hash-History fuer Deeplinks
-- **Tastatur-Shortcuts** — `j`/`k` Navigation, `Enter` Detail, `o` Original, `b` Bookmark, `s`/`/` Suche, `Esc` Schliessen, `1-8` Kategorien
+- **Browser-Navigation** — Zurück-Button schließt Modals korrekt, Hash-History für Deeplinks
+- **Tastatur-Shortcuts** — `j`/`k` Navigation, `Enter` Detail, `o` Original, `b` Bookmark, `s`/`/` Suche, `Esc` Schließen, `1-8` Kategorien
 - **Swipe-Gesten** — Wischen zum Bookmarken (rechts) und als gelesen markieren (links)
 - **Teilen-Buttons** — Web Share API mit Clipboard-Fallback
 - **PWA** — Installierbar als App auf Smartphone und Desktop mit Service Worker, Offline-Caching (Workbox), Auto-Update
-- **Embed-Widget** — Einbettbares JavaScript-Widget fuer externe Websites
+- **Embed-Widget** — Einbettbares JavaScript-Widget für externe Websites
 
-### Zuverlaessigkeit & Monitoring
+### Zuverlässigkeit & Monitoring
 - **Feed-Health-Monitoring** — Automatische Deaktivierung nach 5 Fehlversuchen, Reaktivierung via UI
-- **Quellen-Dashboard** — Feed-Status mit Ampel-Anzeige (gruen/gelb/rot) und Fehlerdetails
-- **Statistik-Dashboard** — Quellen-Verteilung, Sentiment-Analyse, Verlauf ueber 7/30/90 Tage
+- **Quellen-Dashboard** — Feed-Status mit Ampel-Anzeige (grün/gelb/rot) und Fehlerdetails
+- **Statistik-Dashboard** — Quellen-Verteilung, Sentiment-Analyse, Verlauf über 7/30/90 Tage
 - **Artikel-Retention** — Automatische Bereinigung alter Artikel (konfigurierbar, Standard 90 Tage)
 - **Health-Endpoint** — Spring Boot Actuator mit Feed-Staleness-Check
 - **Rate Limiting** — Refresh-Endpoint auf 1 Aufruf pro 10 Minuten pro IP begrenzt
@@ -70,10 +70,10 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator fuer Kuenstliche Intelligenz un
 
 ### Design & Performance
 - **Industrial Dark UI** — Brutalist-Design mit IBM Plex Mono, Grid-Texturen, Electric Yellow (#FFE000)
-- **Smartphone-optimiert** — Bottom-Sheet-Modals, Safe-Area-Insets fuer Notch-Phones, 44px+ Touch-Targets, Hover nur auf Pointer-Geraeten, Overscroll-Contain, 3-Spalten-Raster (Desktop) / 1-Spalte (Mobile)
+- **Smartphone-optimiert** — Bottom-Sheet-Modals, Safe-Area-Insets für Notch-Phones, 44px+ Touch-Targets, Hover nur auf Pointer-Geräten, Overscroll-Contain, 3-Spalten-Raster (Desktop) / 1-Spalte (Mobile)
 - **Performance** — DB-Indexes, Caffeine-Cache (30s Stats / 15min Content), Batch-Inserts, Gzip, Lazy-Loading, React.memo, Visibility-basiertes Polling
 - **Kostenoptimiert** — Haiku 4.5, HTML/URL/Boilerplate-Stripping, Content-Truncation (600 Zeichen), Prompt Caching, Title-Dedup, Concurrency-Guards
-- **Rechtskonforme Seiten** — Impressum, Datenschutzerklaerung, Nutzungsbedingungen
+- **Rechtskonforme Seiten** — Impressum, Datenschutzerklärung, Nutzungsbedingungen
 
 ## Architektur
 
@@ -83,7 +83,7 @@ maschinen-post/
 │   ├── controller/        REST-Endpoints (Articles, Feeds, Stats, RssFeed)
 │   ├── service/           FeedService, AiSummaryService, ArticleService,
 │   │                      TrendingService, DigestService, DuplicateDetectionService
-│   ├── scheduler/         FeedScheduler (12h), CleanupScheduler (taeglich 3 Uhr)
+│   ├── scheduler/         FeedScheduler (12h), CleanupScheduler (täglich 3 Uhr)
 │   ├── health/            FeedHealthIndicator (Actuator)
 │   ├── model/             JPA-Entities (Article, Feed) + DTOs
 │   ├── config/            CacheConfig (Caffeine Composite), WebConfig (CORS)
@@ -119,7 +119,7 @@ FeedScheduler (AtomicBoolean Guard)
             │
             └── AiSummaryService.processUnprocessedArticles() [AtomicBoolean Guard]
                     ├── Titel-Dedup: Trigram-Jaccard gegen letzte 72h
-                    │   → Bei Treffer: API-Call uebersprungen, als Duplikat markiert
+                    │   → Bei Treffer: API-Call übersprungen, als Duplikat markiert
                     ├── Pro Artikel: DB re-fetch → HTML/URL/Boilerplate strip
                     │   → Content auf 600 Zeichen → Claude API
                     │   → Summary/Tags/Kategorie/Sentiment speichern
@@ -159,7 +159,7 @@ FeedScheduler (AtomicBoolean Guard)
 | Golem.de             | DE      | `rss.golem.de/rss.php?feed=RSS2.0`                               |
 | t3n                  | DE      | `t3n.de/rss.xml`                                                 |
 
-Weitere Feeds koennen zur Laufzeit via `POST /api/feeds` hinzugefuegt werden.
+Weitere Feeds können zur Laufzeit via `POST /api/feeds` hinzugefügt werden.
 
 ## Voraussetzungen
 
@@ -182,7 +182,7 @@ mvn spring-boot:run
 # Mit Claude-KI-Zusammenfassungen
 CLAUDE_API_KEY=sk-ant-your-key-here mvn spring-boot:run
 
-# Tests ausfuehren (43 Tests)
+# Tests ausführen (43 Tests)
 mvn test
 
 # Einzelne Testklasse
@@ -202,7 +202,7 @@ cd frontend
 npm install
 npm run dev
 
-# Tests ausfuehren (14 Tests)
+# Tests ausführen (14 Tests)
 npm test
 ```
 
@@ -226,7 +226,7 @@ cd frontend && npm run build
 # Backend-JAR bauen
 cd backend && mvn clean package -DskipTests
 
-# Starten (mit prod-Profil fuer PostgreSQL)
+# Starten (mit prod-Profil für PostgreSQL)
 java -jar -Dspring.profiles.active=prod target/maschinenpost-1.0.0.jar
 ```
 
@@ -239,13 +239,13 @@ java -jar -Dspring.profiles.active=prod target/maschinenpost-1.0.0.jar
 | GET     | `/api/articles/trending`     | Trending-Topics via Tag-Clustering (`hours`, Standard 48)       |
 | GET     | `/api/articles/digest`       | Tages-/Wochen-Digest (`period`: `daily`/`weekly`)              |
 | GET     | `/api/feeds`                 | Alle RSS-Quellen auflisten                                      |
-| POST    | `/api/feeds`                 | Neue RSS-Quelle hinzufuegen (`{ name, url }`)                  |
+| POST    | `/api/feeds`                 | Neue RSS-Quelle hinzufügen (`{ name, url }`)                   |
 | POST    | `/api/feeds/{id}/reactivate` | Deaktivierten Feed reaktivieren                                 |
-| GET     | `/api/stats`                 | Dashboard-Statistiken + Kategoriezaehler                        |
+| GET     | `/api/stats`                 | Dashboard-Statistiken + Kategoriezähler                         |
 | GET     | `/api/stats/history`         | Statistik-Verlauf (`days`, Standard 30)                         |
-| POST    | `/api/refresh`               | Manuellen Feed-Refresh ausloesen (Rate-Limited: 10min/IP)      |
+| POST    | `/api/refresh`               | Manuellen Feed-Refresh auslösen (Rate-Limited: 10min/IP)       |
 | GET     | `/api/feed.xml`              | RSS 2.0 Ausgabe-Feed (letzte 50 Artikel, 15min Cache)          |
-| GET     | `/actuator/health`           | Health-Check mit Feed-Staleness-Pruefung                        |
+| GET     | `/actuator/health`           | Health-Check mit Feed-Staleness-Prüfung                         |
 
 ## Konfiguration
 
@@ -253,7 +253,7 @@ Umgebungsvariablen:
 
 | Variable         | Standard                  | Beschreibung                                |
 |------------------|---------------------------|---------------------------------------------|
-| `CLAUDE_API_KEY` | (keiner)                  | Anthropic API Key fuer KI-Zusammenfassungen |
+| `CLAUDE_API_KEY` | (keiner)                  | Anthropic API Key für KI-Zusammenfassungen  |
 | `SERVER_PORT`    | 8080 (dev) / 3010 (prod)  | Backend-Server-Port                         |
 | `DB_USERNAME`    | —                         | PostgreSQL-Benutzername (nur prod)          |
 | `DB_PASSWORD`    | —                         | PostgreSQL-Passwort (nur prod)              |
@@ -269,22 +269,22 @@ Anwendungskonfiguration in `backend/src/main/resources/application.yml`:
 
 ## Kostenoptimierung
 
-Die App minimiert Claude-API-Kosten durch mehrere Massnahmen:
+Die App minimiert Claude-API-Kosten durch mehrere Maßnahmen:
 
-- **Modell:** Haiku 4.5 — 5-50x guenstiger als Sonnet/Opus
+- **Modell:** Haiku 4.5 — 5-50x günstiger als Sonnet/Opus
 - **Content-Stripping:** HTML-Tags, Entities, URLs und Boilerplate ("Read more...", "Weiterlesen") werden vor dem API-Call entfernt
-- **Content-Truncation:** Artikelinhalt auf 600 Zeichen begrenzt (Titel + erster Absatz genuegt fuer Kategorisierung)
-- **Titel-Dedup:** Vor dem API-Call Trigram-Jaccard-Vergleich gegen kuerzlich verarbeitete Artikel — bei aehnlichem Titel wird der API-Call komplett uebersprungen
-- **Kompakter System Prompt:** ~80 Tokens, Kategorien werden nicht aufgezaehlt
+- **Content-Truncation:** Artikelinhalt auf 600 Zeichen begrenzt (Titel + erster Absatz genügt für Kategorisierung)
+- **Titel-Dedup:** Vor dem API-Call Trigram-Jaccard-Vergleich gegen kürzlich verarbeitete Artikel — bei ähnlichem Titel wird der API-Call komplett übersprungen
+- **Kompakter System Prompt:** ~80 Tokens, Kategorien werden nicht aufgezählt
 - **Max Tokens:** Antwort auf 256 Tokens limitiert (JSON ist typischerweise ~150-200 Tokens)
-- **Prompt Caching:** System Prompt via `cache_control: ephemeral` gecacht — 90% guenstiger ab dem 2. Artikel
-- **12-Stunden-Intervall:** Feeds werden zweimal taeglich abgerufen
+- **Prompt Caching:** System Prompt via `cache_control: ephemeral` gecacht — 90% günstiger ab dem 2. Artikel
+- **12-Stunden-Intervall:** Feeds werden zweimal täglich abgerufen
 - **Concurrency Guards:** `AtomicBoolean`-Locks verhindern doppelte API-Calls
 - **DB-Recheck:** Jeder Artikel wird vor dem Claude-Call erneut aus der DB geladen
 - **Throttling:** 1000ms Pause zwischen API-Calls
 - **Content-Duplikaterkennung:** Tag-Jaccard + Trigram-Similarity nach dem API-Call markiert inhaltliche Duplikate
 
-**Geschaetzte Kosten (Haiku 4.5):**
+**Geschätzte Kosten (Haiku 4.5):**
 
 | Posten            | Tokens/Artikel | Preis/1M Tokens | Kosten/Artikel |
 |-------------------|----------------|-----------------|----------------|
@@ -305,7 +305,7 @@ mvn test                          # alle Tests
 mvn test -Dtest=FeedSchedulerTest # einzelne Testklasse
 ```
 
-| Testklasse            | Prueft                                                       |
+| Testklasse            | Prüft                                                        |
 |-----------------------|--------------------------------------------------------------|
 | `ArticleTest`         | Tag-JSON-Serialisierung, Builder-Defaults                    |
 | `ArticleResponseTest` | DTO-Mapping, HTML-Stripping, Truncation                      |
@@ -321,7 +321,7 @@ cd frontend
 npm test
 ```
 
-| Testdatei               | Prueft                                             |
+| Testdatei               | Prüft                                              |
 |-------------------------|----------------------------------------------------|
 | `useBookmarks.test.ts`  | Toggle on/off, localStorage Persistenz/Restore     |
 | `useReadHistory.test.ts`| Gelesen-Markierung, Deduplizierung, Persistenz     |
@@ -332,27 +332,27 @@ npm test
 Die App kann als native App auf dem Smartphone installiert werden:
 
 **iPhone (Safari):**
-1. [maschinenpost.celox.io](https://maschinenpost.celox.io) in Safari oeffnen
+1. [maschinenpost.celox.io](https://maschinenpost.celox.io) in Safari öffnen
 2. Teilen-Button (Quadrat mit Pfeil) tippen
-3. "Zum Home-Bildschirm" waehlen
+3. "Zum Home-Bildschirm" wählen
 
 **Android (Chrome):**
-1. [maschinenpost.celox.io](https://maschinenpost.celox.io) in Chrome oeffnen
-2. "App installieren"-Banner antippen oder Menu → "App installieren"
+1. [maschinenpost.celox.io](https://maschinenpost.celox.io) in Chrome öffnen
+2. "App installieren"-Banner antippen oder Menü → "App installieren"
 
-Die PWA cached statische Assets (JS, CSS, Fonts) lokal und nutzt NetworkFirst-Strategie fuer API-Daten mit 5-Minuten-Fallback-Cache.
+Die PWA cached statische Assets (JS, CSS, Fonts) lokal und nutzt NetworkFirst-Strategie für API-Daten mit 5-Minuten-Fallback-Cache.
 
 ## Tastatur-Shortcuts
 
 | Taste       | Aktion                      |
 |-------------|----------------------------|
-| `j` / `k`   | Naechster / Voriger Artikel |
-| `Enter`     | Detail-Modal oeffnen        |
-| `o`         | Original-Artikel oeffnen    |
+| `j` / `k`   | Nächster / Voriger Artikel  |
+| `Enter`     | Detail-Modal öffnen         |
+| `o`         | Original-Artikel öffnen     |
 | `b`         | Lesezeichen setzen/entfernen|
 | `s` / `/`   | Suche fokussieren           |
-| `Esc`       | Modal/Suche schliessen      |
-| `1` - `8`   | Kategorie auswaehlen        |
+| `Esc`       | Modal/Suche schließen       |
+| `1` - `8`   | Kategorie auswählen         |
 
 ## Lizenz
 
