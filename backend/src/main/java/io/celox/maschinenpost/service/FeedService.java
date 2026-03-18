@@ -23,6 +23,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -34,6 +37,35 @@ public class FeedService {
 
     private record FeedDef(String name, String url, String language) {}
 
+    /** Old broad German feeds to migrate to AI-specific alternatives. */
+    private static final Map<String, FeedDef> FEED_MIGRATIONS = Map.of(
+            "https://www.heise.de/rss/heise-atom.xml",
+            new FeedDef("heise KI", "https://www.heise.de/thema/Kuenstliche-Intelligenz.xml", "de"),
+            "https://t3n.de/rss.xml",
+            new FeedDef("t3n KI", "https://t3n.de/tag/kuenstliche-intelligenz/rss.xml", "de")
+    );
+
+    /** Feeds to disable (no AI-specific alternative available). */
+    private static final Set<String> FEEDS_TO_DISABLE = Set.of(
+            "https://rss.golem.de/rss.php?feed=RSS2.0"
+    );
+
+    /** Reject articles whose title starts with "Anzeige" (sponsored ads). */
+    private static final Pattern AD_PATTERN = Pattern.compile(
+            "^\\s*(Anzeige|Sponsored|\\(Anzeige\\)|\\[Anzeige\\]|Werbung)\\s*[:：]?",
+            Pattern.CASE_INSENSITIVE);
+
+    /** Relevance keywords — at least one must appear in title or content for general feeds. */
+    private static final Pattern RELEVANCE_PATTERN = Pattern.compile(
+            "(?i)(\\bKI\\b|\\bAI\\b|künstliche.?intelligenz|artificial.?intelligence|machine.?learn|" +
+            "deep.?learn|neural|\\bLLM\\b|\\bGPT\\b|\\bClaude\\b|\\bGemini\\b|\\bLlama\\b|" +
+            "robot|autonom|autonomous|automation|\\bNLP\\b|computer.?vision|" +
+            "sprachmodell|language.?model|chat.?bot|\\bMLOps\\b|transformer|diffusion|" +
+            "\\bOpenAI\\b|\\bDeepMind\\b|\\bAnthrop|\\bMistral\\b|hugging.?face|" +
+            "\\bCopilot\\b|\\bAgent\\b|prompt|\\bRAG\\b|neural.?net|reinforcement.?learn|" +
+            "maschinell|\\bGAN\\b|\\bCNN\\b|\\bRNN\\b|generativ|\\bSora\\b|\\bMidjourney\\b|" +
+            "\\bStable.?Diffusion|\\bDALL.?E|Foundation.?Model|Frontier.?Model)");
+
     private static final List<FeedDef> DEFAULT_FEEDS = List.of(
             // English
             new FeedDef("Google AI Blog", "https://feeds.feedburner.com/blogspot/gJZg", "en"),
@@ -43,10 +75,9 @@ public class FeedService {
             new FeedDef("MIT AI News", "https://news.mit.edu/topic/mitartificial-intelligence2-rss.xml", "en"),
             new FeedDef("IEEE Spectrum Robotics", "https://spectrum.ieee.org/feeds/topic/robotics.rss", "en"),
             new FeedDef("The Robot Report", "https://www.therobotreport.com/feed/", "en"),
-            // Deutsch
-            new FeedDef("heise online", "https://www.heise.de/rss/heise-atom.xml", "de"),
-            new FeedDef("Golem.de", "https://rss.golem.de/rss.php?feed=RSS2.0", "de"),
-            new FeedDef("t3n", "https://t3n.de/rss.xml", "de")
+            // Deutsch (KI-spezifisch)
+            new FeedDef("heise KI", "https://www.heise.de/thema/Kuenstliche-Intelligenz.xml", "de"),
+            new FeedDef("t3n KI", "https://t3n.de/tag/kuenstliche-intelligenz/rss.xml", "de")
     );
 
     @PostConstruct
@@ -65,6 +96,34 @@ public class FeedService {
             }
             log.info("Default feeds initialized.");
         } else {
+            // Migrate old broad feeds to AI-specific alternatives
+            for (var entry : FEED_MIGRATIONS.entrySet()) {
+                feedRepository.findByUrl(entry.getKey()).ifPresent(oldFeed -> {
+                    FeedDef replacement = entry.getValue();
+                    if (!feedRepository.existsByUrl(replacement.url())) {
+                        oldFeed.setName(replacement.name());
+                        oldFeed.setUrl(replacement.url());
+                        oldFeed.setFailCount(0);
+                        oldFeed.setLastError(null);
+                        oldFeed.setActive(true);
+                        feedRepository.save(oldFeed);
+                        log.info("Migrated feed '{}' -> '{}' ({})", entry.getKey(), replacement.name(), replacement.url());
+                    }
+                });
+            }
+
+            // Disable broad feeds with no AI-specific alternative
+            for (String url : FEEDS_TO_DISABLE) {
+                feedRepository.findByUrl(url).ifPresent(feed -> {
+                    if (feed.isActive()) {
+                        feed.setActive(false);
+                        feed.setDisabledAt(LocalDateTime.now());
+                        feedRepository.save(feed);
+                        log.info("Disabled broad feed: {} ({})", feed.getName(), url);
+                    }
+                });
+            }
+
             // Add new feeds that don't exist yet
             for (FeedDef def : DEFAULT_FEEDS) {
                 if (!feedRepository.existsByUrl(def.url())) {
@@ -153,8 +212,22 @@ public class FeedService {
                                     .toLocalDateTime();
                         }
 
+                        String title = entry.getTitle() != null ? entry.getTitle() : "Untitled";
+
+                        // Filter out sponsored ads
+                        if (AD_PATTERN.matcher(title).find()) {
+                            log.debug("Rejected ad article: {}", title);
+                            continue;
+                        }
+
+                        // Relevance filter: title or content must mention AI/ML/robotics topics
+                        if (!isRelevant(title, rawContent)) {
+                            log.debug("Rejected off-topic article: {}", title);
+                            continue;
+                        }
+
                         Article article = Article.builder()
-                                .title(entry.getTitle() != null ? entry.getTitle() : "Untitled")
+                                .title(title)
                                 .url(entryUrl)
                                 .urlHash(urlHash)
                                 .source(feed.getName())
@@ -184,6 +257,20 @@ public class FeedService {
             log.error("Failed to fetch feed '{}': {}", feed.getName(), e.getMessage());
             return 0;
         }
+    }
+
+    /**
+     * Check if an article is relevant to AI/ML/robotics topics.
+     */
+    private boolean isRelevant(String title, String rawContent) {
+        if (RELEVANCE_PATTERN.matcher(title).find()) {
+            return true;
+        }
+        String stripped = rawContent.replaceAll("<[^>]*>", " ")
+                .replaceAll("&[a-zA-Z#0-9]+;", " ");
+        // Check first 500 chars of content for relevance
+        String contentSample = stripped.length() > 500 ? stripped.substring(0, 500) : stripped;
+        return RELEVANCE_PATTERN.matcher(contentSample).find();
     }
 
     private String computeSha256(String input) {

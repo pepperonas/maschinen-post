@@ -35,7 +35,7 @@ GitHub Actions CI runs on push/PR to `main`: `mvn test` (Java 17) + `npm run bui
 
 ## Architecture
 
-Monorepo: Spring Boot backend + React frontend. Aggregates 10 RSS feeds (7 EN + 3 DE), processes articles through Claude Haiku for German summarization/tagging/categorization, serves via REST API.
+Monorepo: Spring Boot backend + React frontend. Aggregates 9 RSS feeds (7 EN + 2 DE), processes articles through Claude Haiku for German summarization/tagging/categorization, serves via REST API.
 
 **Production:** `https://maschinenpost.celox.io` — VPS at 69.62.121.168 (SSH alias: `celox`), PostgreSQL 16, backend on port 3010, Nginx reverse proxy with SSL.
 
@@ -45,7 +45,7 @@ Monorepo: Spring Boot backend + React frontend. Aggregates 10 RSS feeds (7 EN + 
 
 - **Entities:** `Article` (SHA-256 `urlHash` dedup, tags as JSON string, `language` field, `duplicateOfId`), `Feed` (`language` field, default "en", `failCount`, `lastError`, `disabledAt` for health tracking)
 - **Services:**
-  - `FeedService` — Rome 2.1.0 RSS parsing, URL dedup, seeds 10 default feeds via `@PostConstruct`, propagates `feed.language` to articles. Tracks feed errors with auto-disable after 5 consecutive failures.
+  - `FeedService` — Rome 2.1.0 RSS parsing, URL dedup, seeds 9 default feeds via `@PostConstruct`, propagates `feed.language` to articles. Tracks feed errors with auto-disable after 5 consecutive failures. Content relevance filter rejects off-topic articles and ads ("Anzeige:") at ingestion time via keyword matching. Auto-migrates old broad German feeds to AI-specific alternatives.
   - `AiSummaryService` — Claude API via `RestClient` with prompt caching. Strips HTML/URLs/boilerplate, truncates to 600 chars, returns German summary + tags + category + sentiment as JSON. Pre-API title dedup via trigram Jaccard (>=0.5) skips API calls for similar titles. No-ops when `CLAUDE_API_KEY` is unset. Runs `DuplicateDetectionService` after processing each article. Logs token usage per article at DEBUG level.
   - `ArticleService` — paginated queries with category/search filtering, stats aggregation, stats history (per-source/sentiment breakdown)
   - `TrendingService` — Clusters recent articles by category + tag Jaccard similarity (>=0.25), returns top 10 trending topics
@@ -112,13 +112,13 @@ All endpoints under `/api/`. Backend returns Spring `Page<T>` JSON for paginated
 
 ## Tests
 
-### Backend (43 tests, JUnit 5 + Mockito)
+### Backend (55 tests, JUnit 5 + Mockito)
 
 | Class | Tests | Covers |
 |---|---|---|
 | `ArticleTest` | 8 | Tag JSON serialization, Builder defaults |
 | `ArticleResponseTest` | 6 | DTO mapping, HTML stripping, truncation |
-| `FeedServiceTest` | 6 | Feed seeding (10 feeds), SHA-256 hashes |
+| `FeedServiceTest` | 10 | Feed seeding (9 feeds), SHA-256 hashes, content filter, ad filter, feed migration |
 | `ArticleServiceTest` | 11 | Sorting, category/search routing, stats, 404 |
 | `AiSummaryServiceTest` | 7 | API-key check, AtomicBoolean guard, lock release, DuplicateDetection mock |
 | `FeedSchedulerTest` | 5 | Concurrency guard, partial-failure recovery, lock release |
@@ -166,7 +166,7 @@ The Claude API integration is cost-optimized:
 ## Key Conventions
 
 - **Language:** All UI text is in German. AI summaries, categories, sentiment values are German.
-- **Feed languages:** 7 English feeds + 3 German feeds. Language stored on both `Feed` and `Article` entities.
+- **Feed languages:** 7 English feeds + 2 German feeds (AI-specific: heise KI, t3n KI). Language stored on both `Feed` and `Article` entities. Golem.de removed (no AI-specific feed available, too much off-topic/ad content).
 - **Deduplication:** URL-level via SHA-256 hash (`urlHash` column, UNIQUE). Content-level via `DuplicateDetectionService` (tag Jaccard + trigram similarity), marks `duplicateOfId`.
 - **AI processing is optional:** Backend runs fine without `CLAUDE_API_KEY` — articles just lack summaries/tags/categories. Frontend shows `rawContent` excerpt as fallback.
 - **Database:** SQLite in dev (`maschinenpost.db`), PostgreSQL in prod. Hibernate `ddl-auto: update` in both.
@@ -180,5 +180,6 @@ The Claude API integration is cost-optimized:
 - **Batch inserts:** Hibernate `batch_size: 50` + `order_inserts: true`. `FeedService.fetchFeed()` uses `saveAll()`.
 - **Mobile:** Bottom-sheet modals (`items-end sm:items-center`, `rounded-t-xl sm:rounded-sm`). Safe-area insets via `viewport-fit=cover` + `env(safe-area-inset-*)`. Touch targets use `p-2.5 sm:p-1.5` pattern (44px+ on mobile, compact on desktop). Hover effects wrapped in `@media (hover: hover)` to prevent sticky states on touch. Header responsive tracking/font-size (`text-xl sm:text-2xl`). Cards `overflow-hidden` + `p-4 sm:p-5`. Global `overflow-x: hidden` + `-webkit-text-size-adjust: 100%`. Swipe via `useSwipe` hook. Legal/Digest/Stats/Sources lazy-loaded via `React.lazy()`.
 - **Keyboard shortcuts:** `j`/`k` (nav), `Enter`/`o` (open), `b` (bookmark), `s`/`/` (search), `Escape` (close/blur), `1-8` (category tabs). Visual focus ring via `.keyboard-focus` CSS class.
+- **Content filter:** Articles are filtered at ingestion time. Ads ("Anzeige:", "Sponsored:") are always rejected. All articles must match at least one AI/ML/robotics relevance keyword in title or first 500 chars of content.
 - **Feed health:** Auto-disable after 5 consecutive failures. Reactivate via `POST /api/feeds/{id}/reactivate` or Sources page UI. `failCount`, `lastError`, `disabledAt` tracked on `Feed` entity.
 - **Article retention:** Configurable via `maschinenpost.retention.days` (default 90). `CleanupScheduler` runs daily at 3 AM.
