@@ -32,10 +32,10 @@ public class AiSummaryService {
     @Value("${maschinenpost.claude.api-key:}")
     private String apiKey;
 
-    @Value("${maschinenpost.claude.model:claude-haiku-4-5-20251001}")
+    @Value("${maschinenpost.claude.model:claude-haiku-5-5}")
     private String model;
 
-    @Value("${maschinenpost.claude.max-tokens:256}")
+    @Value("${maschinenpost.claude.max-tokens:1024}")
     private int maxTokens;
 
     private RestClient restClient;
@@ -71,24 +71,11 @@ public class AiSummaryService {
 
             String userMessage = article.getTitle() + "\n" + rawContent;
 
-            Map<String, Object> requestBody = Map.of(
-                    "model", model,
-                    "max_tokens", maxTokens,
-                    "system", List.of(
-                            Map.of("type", "text", "text", SYSTEM_PROMPT,
-                                    "cache_control", Map.of("type", "ephemeral"))
-                    ),
-                    "messages", List.of(
-                            Map.of("role", "user", "content", userMessage)
-                    )
-            );
-
-            String requestJson = objectMapper.writeValueAsString(requestBody);
+            String requestJson = objectMapper.writeValueAsString(buildRequestBody(model, maxTokens, userMessage));
 
             String responseBody = restClient.post()
                     .header("x-api-key", apiKey)
                     .header("anthropic-version", "2023-06-01")
-                    .header("anthropic-beta", "prompt-caching-2024-07-31")
                     .header("Content-Type", "application/json")
                     .body(requestJson)
                     .retrieve()
@@ -99,20 +86,26 @@ public class AiSummaryService {
             @SuppressWarnings("unchecked")
             Map<String, Object> usage = (Map<String, Object>) response.get("usage");
             if (usage != null) {
-                log.debug("Token usage for '{}': input={}, output={}",
+                // input_tokens excludes cached tokens; cache reads/writes are reported separately.
+                log.debug("Token usage for '{}': input={}, cache_read={}, cache_write={}, output={}",
                         article.getTitle(),
                         usage.get("input_tokens"),
+                        usage.get("cache_read_input_tokens"),
+                        usage.get("cache_creation_input_tokens"),
                         usage.get("output_tokens"));
             }
 
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> content = (List<Map<String, Object>>) response.get("content");
-            if (content == null || content.isEmpty()) {
-                log.warn("Empty response from Claude API for article: {}", article.getTitle());
+            String stopReason = (String) response.get("stop_reason");
+            if ("refusal".equals(stopReason) || "max_tokens".equals(stopReason)) {
+                log.warn("Claude stopped with '{}' for article: {}", stopReason, article.getTitle());
                 return null;
             }
 
-            String text = (String) content.get(0).get("text");
+            String text = extractText(response);
+            if (text == null || text.isBlank()) {
+                log.warn("Empty response from Claude API for article: {}", article.getTitle());
+                return null;
+            }
 
             text = text.trim();
             if (text.startsWith("```json")) {
@@ -212,6 +205,45 @@ public class AiSummaryService {
         } finally {
             processing.set(false);
         }
+    }
+
+    /**
+     * Request body for the Messages API. Haiku 5.5 thinks adaptively by default (effort
+     * default medium) - this task is simple, so effort is pinned to low. No sampling
+     * parameters and no prefill: both return 400 on Haiku 5.5. The system prompt keeps a
+     * cache_control breakpoint; it only takes effect once the prefix reaches the model's
+     * minimum (512 tokens on Haiku 5.5) - below that the API silently skips caching.
+     */
+    static Map<String, Object> buildRequestBody(String model, int maxTokens, String userMessage) {
+        return Map.of(
+                "model", model,
+                "max_tokens", maxTokens,
+                "output_config", Map.of("effort", "low"),
+                "system", List.of(
+                        Map.of("type", "text", "text", SYSTEM_PROMPT,
+                                "cache_control", Map.of("type", "ephemeral"))
+                ),
+                "messages", List.of(
+                        Map.of("role", "user", "content", userMessage)
+                )
+        );
+    }
+
+    /**
+     * Concatenate all "text" blocks. With thinking on, the response can start with
+     * "thinking" blocks (empty text by default), so the first block is not the answer.
+     */
+    @SuppressWarnings("unchecked")
+    static String extractText(Map<String, Object> response) {
+        List<Map<String, Object>> content = (List<Map<String, Object>>) response.get("content");
+        if (content == null) return null;
+        StringBuilder sb = new StringBuilder();
+        for (Map<String, Object> block : content) {
+            if ("text".equals(block.get("type")) && block.get("text") instanceof String t) {
+                sb.append(t);
+            }
+        }
+        return sb.isEmpty() ? null : sb.toString();
     }
 
     /**

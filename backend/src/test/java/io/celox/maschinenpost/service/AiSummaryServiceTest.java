@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -114,5 +115,43 @@ class AiSummaryServiceTest {
         aiSummaryService.processUnprocessedArticles();
 
         verify(articleRepository, times(2)).findByProcessedFalse();
+    }
+
+    @Test
+    void extractText_skipsThinkingBlocks() {
+        Map<String, Object> response = Map.of("content", List.of(
+                Map.of("type", "thinking", "thinking", "", "signature", "sig"),
+                Map.of("type", "text", "text", "{\"summary\":\"x\"}")));
+
+        assertThat(AiSummaryService.extractText(response)).isEqualTo("{\"summary\":\"x\"}");
+    }
+
+    @Test
+    void extractText_onlyThinking_returnsNull() {
+        Map<String, Object> response = Map.of("content", List.of(
+                Map.of("type", "thinking", "thinking", "", "signature", "sig")));
+
+        assertThat(AiSummaryService.extractText(response)).isNull();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void buildRequestBody_lowEffortCacheControlNoSampling() {
+        Map<String, Object> body = AiSummaryService.buildRequestBody("claude-haiku-5-5", 1024, "Titel\nText");
+
+        assertThat(body.get("model")).isEqualTo("claude-haiku-5-5");
+        assertThat(body.get("output_config")).isEqualTo(Map.of("effort", "low"));
+        List<Map<String, Object>> system = (List<Map<String, Object>>) body.get("system");
+        assertThat(system).hasSize(1);
+        assertThat(system.get(0).get("cache_control")).isEqualTo(Map.of("type", "ephemeral"));
+        assertThat(body).doesNotContainKeys("temperature", "top_p", "top_k", "thinking");
+        List<Map<String, Object>> messages = (List<Map<String, Object>>) body.get("messages");
+        assertThat(messages.get(messages.size() - 1).get("role")).isEqualTo("user");
+    }
+
+    @Test
+    void defaultModelIsHaiku55() throws Exception {
+        String yml = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/resources/application.yml"));
+        assertThat(yml).contains("model: claude-haiku-5-5").doesNotContain("haiku-4-5");
     }
 }

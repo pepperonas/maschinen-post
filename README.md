@@ -11,7 +11,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178c6.svg)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-38bdf8.svg)](https://tailwindcss.com/)
 [![Vite](https://img.shields.io/badge/Vite-5-646cff.svg)](https://vitejs.dev/)
-[![Claude API](https://img.shields.io/badge/Claude%20API-Haiku%204.5-cc785c.svg)](https://docs.anthropic.com/)
+[![Claude API](https://img.shields.io/badge/Claude%20API-Haiku%205.5-cc785c.svg)](https://docs.anthropic.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
 [![GitHub](https://img.shields.io/github/stars/pepperonas/maschinen-post?style=social)](https://github.com/pepperonas/maschinen-post)
 [![GitHub last commit](https://img.shields.io/github/last-commit/pepperonas/maschinen-post)](https://github.com/pepperonas/maschinen-post/commits/main)
@@ -33,7 +33,7 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator für Künstliche Intelligenz un
 
 ### Kern-Features
 - **10 RSS-Quellen** — 7 englische + 3 deutsche Feeds, automatisch alle 12 Stunden aktualisiert
-- **KI-Zusammenfassungen** — Claude Haiku 4.5 generiert deutsche Zusammenfassungen, Tags, Kategorien und Sentiment
+- **KI-Zusammenfassungen** — Claude Haiku 5.5 generiert deutsche Zusammenfassungen, Tags, Kategorien und Sentiment
 - **7 Kategorien** — KI-Modelle, Robotik, Regulierung, Startups, Forschung, Hardware, Tools
 - **Sentimentanalyse** — Visuelle Indikatoren pro Artikel (&#9650; positiv, &#9679; neutral, &#9660; kritisch)
 - **Volltextsuche** — Debounced-Suche über Titel und KI-Zusammenfassungen
@@ -72,7 +72,7 @@ Deutschsprachiger Echtzeit-Nachrichtenaggregator für Künstliche Intelligenz un
 - **Industrial Dark UI** — Brutalist-Design mit IBM Plex Mono, Grid-Texturen, Electric Yellow (#FFE000)
 - **Smartphone-optimiert** — Bottom-Sheet-Modals, Safe-Area-Insets für Notch-Phones, 44px+ Touch-Targets, Hover nur auf Pointer-Geräten, Overscroll-Contain, 3-Spalten-Raster (Desktop) / 1-Spalte (Mobile)
 - **Performance** — DB-Indexes, Caffeine-Cache (30s Stats / 15min Content), Batch-Inserts, Gzip, Lazy-Loading, React.memo, Visibility-basiertes Polling
-- **Kostenoptimiert** — Haiku 4.5, HTML/URL/Boilerplate-Stripping, Content-Truncation (600 Zeichen), Prompt Caching, Title-Dedup, Concurrency-Guards
+- **Kostenoptimiert** — Haiku 5.5 (Effort `low`), HTML/URL/Boilerplate-Stripping, Content-Truncation (600 Zeichen), Title-Dedup, Concurrency-Guards
 - **Rechtskonforme Seiten** — Impressum, Datenschutzerklärung, Nutzungsbedingungen
 
 ## Architektur
@@ -134,7 +134,7 @@ FeedScheduler (AtomicBoolean Guard)
 | Frontend   | React 18 + TypeScript 5.5 + Tailwind CSS 3.4  |
 | Build      | Vite 5 (Frontend) + Maven (Backend)            |
 | Backend    | Spring Boot 3.2.5 (Java 17)                    |
-| KI         | Claude Haiku 4.5 (kostenoptimiert, Prompt Caching) |
+| KI         | Claude Haiku 5.5 (kostenoptimiert, Effort `low`) |
 | Datenbank  | SQLite 3.45 (dev) / PostgreSQL 16 (prod)       |
 | RSS        | Rome 2.1.0 (Java RSS/Atom Parser)              |
 | Caching    | Caffeine (30s Stats / 15min Content)           |
@@ -182,7 +182,7 @@ mvn spring-boot:run
 # Mit Claude-KI-Zusammenfassungen
 CLAUDE_API_KEY=sk-ant-your-key-here mvn spring-boot:run
 
-# Tests ausführen (43 Tests)
+# Tests ausführen (59 Tests)
 mvn test
 
 # Einzelne Testklasse
@@ -192,7 +192,7 @@ mvn test -Dtest=FeedSchedulerTest
 Das Backend startet auf `http://localhost:8080`. Beim ersten Start:
 1. 10 RSS-Feed-Quellen in SQLite angelegt
 2. Alle Artikel aus den Feeds abgerufen
-3. Artikel mit Claude Haiku 4.5 verarbeitet (falls API Key gesetzt)
+3. Artikel mit Claude Haiku 5.5 verarbeitet (falls API Key gesetzt)
 4. Fetch+Process-Zyklus alle 12 Stunden wiederholt
 
 ### Frontend
@@ -262,7 +262,7 @@ Anwendungskonfiguration in `backend/src/main/resources/application.yml`:
 
 | Property                                  | Standard                    | Beschreibung                         |
 |-------------------------------------------|-----------------------------|--------------------------------------|
-| `maschinenpost.claude.model`              | `claude-haiku-4-5-20251001` | Claude-Modell-ID                     |
+| `maschinenpost.claude.model`              | `claude-haiku-5-5`          | Claude-Modell-ID                     |
 | `maschinenpost.claude.max-tokens`         | `256`                       | Max. Antwort-Tokens pro Artikel      |
 | `maschinenpost.scheduler.feed-fetch-rate` | `43200000` (12 Std.)        | Feed-Abrufintervall in Millisekunden |
 | `maschinenpost.retention.days`            | `90`                        | Artikel-Aufbewahrungsdauer in Tagen  |
@@ -271,33 +271,32 @@ Anwendungskonfiguration in `backend/src/main/resources/application.yml`:
 
 Die App minimiert Claude-API-Kosten durch mehrere Maßnahmen:
 
-- **Modell:** Haiku 4.5 — 5-50x günstiger als Sonnet/Opus
+- **Modell:** Haiku 5.5 mit `output_config.effort: low` — Thinking ist bei Haiku 5.5 standardmäßig an; bei `low` fällt es für diese einfache Aufgabe praktisch weg (gemessen 0 Thinking-Tokens)
 - **Content-Stripping:** HTML-Tags, Entities, URLs und Boilerplate ("Read more...", "Weiterlesen") werden vor dem API-Call entfernt
 - **Content-Truncation:** Artikelinhalt auf 600 Zeichen begrenzt (Titel + erster Absatz genügt für Kategorisierung)
 - **Titel-Dedup:** Vor dem API-Call Trigram-Jaccard-Vergleich gegen kürzlich verarbeitete Artikel — bei ähnlichem Titel wird der API-Call komplett übersprungen
 - **Kompakter System Prompt:** ~80 Tokens, Kategorien werden nicht aufgezählt
-- **Max Tokens:** Antwort auf 256 Tokens limitiert (JSON ist typischerweise ~150-200 Tokens)
-- **Prompt Caching:** System Prompt via `cache_control: ephemeral` gecacht — 90% günstiger ab dem 2. Artikel
+- **Max Tokens:** 1024 (JSON ist typischerweise ~140 Tokens; Reserve, weil Thinking in `max_tokens` zählt)
+- **Prompt Caching:** `cache_control` liegt auf dem System Prompt, greift aber nicht — der Prompt hat ~200 Tokens, Haiku 5.5 cacht erst ab 512 (Haiku 4.5 erst ab 4096). Bewusst nicht künstlich aufgebläht: der System Prompt kostet ungecacht ~$0.00002 pro Artikel
 - **12-Stunden-Intervall:** Feeds werden zweimal täglich abgerufen
 - **Concurrency Guards:** `AtomicBoolean`-Locks verhindern doppelte API-Calls
 - **DB-Recheck:** Jeder Artikel wird vor dem Claude-Call erneut aus der DB geladen
 - **Throttling:** 1000ms Pause zwischen API-Calls
 - **Content-Duplikaterkennung:** Tag-Jaccard + Trigram-Similarity nach dem API-Call markiert inhaltliche Duplikate
 
-**Geschätzte Kosten (Haiku 4.5):**
+**Geschätzte Kosten (Haiku 5.5, gemessen 2026-11-13):**
 
-| Posten            | Tokens/Artikel | Preis/1M Tokens | Kosten/Artikel |
-|-------------------|----------------|-----------------|----------------|
-| Input (Content)   | ~280           | $1.00           | $0.00028       |
-| Input (Cache-Hit) | ~80            | $0.10           | $0.000008      |
-| Output (JSON)     | ~180           | $5.00           | $0.0009        |
-| **Gesamt**        |                |                 | **~$0.0012**   |
+| Posten          | Tokens/Artikel | Preis/1M Tokens | Kosten/Artikel |
+|-----------------|----------------|-----------------|----------------|
+| Input           | ~290           | $0.10           | $0.000029      |
+| Output (JSON)   | ~140           | $0.50           | $0.00007       |
+| **Gesamt**      |                |                 | **~$0.0001**   |
 
-Bei ~25 Artikeln/Tag (nach Titel-Dedup): **~$0.03/Tag bzw. ~$0.90/Monat**
+Bei ~25 Artikeln/Tag (nach Titel-Dedup): **~$0.0025/Tag bzw. ~$0.08/Monat** (vorher mit Haiku 4.5 ~$0.90/Monat)
 
 ## Tests
 
-### Backend (43 Tests, JUnit 5 + Mockito)
+### Backend (59 Tests, JUnit 5 + Mockito)
 
 ```bash
 cd backend
@@ -311,7 +310,7 @@ mvn test -Dtest=FeedSchedulerTest # einzelne Testklasse
 | `ArticleResponseTest` | DTO-Mapping, HTML-Stripping, Truncation                      |
 | `FeedServiceTest`     | Feed-Seeding (10 Feeds, 7 EN / 3 DE), SHA-256 Hashes        |
 | `ArticleServiceTest`  | Sorting, Category/Search/Language-Routing, Stats, 404        |
-| `AiSummaryServiceTest`| API-Key-Check, AtomicBoolean-Guard, Lock-Release, Duplikate  |
+| `AiSummaryServiceTest`| API-Key-Check, Guard, Lock-Release, Request-Body (Effort low, cache_control, keine Sampling-Parameter), Text-Extraktion trotz Thinking-Blöcken |
 | `FeedSchedulerTest`   | Concurrency-Guard, Service-Reihenfolge, Exception-Safety     |
 
 ### Frontend (14 Tests, Vitest + Testing Library)

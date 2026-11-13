@@ -35,7 +35,7 @@ GitHub Actions CI runs on push/PR to `main`: `mvn test` (Java 17) + `npm run bui
 
 ## Architecture
 
-Monorepo: Spring Boot backend + React frontend. Aggregates 9 RSS feeds (7 EN + 2 DE), processes articles through Claude Haiku for German summarization/tagging/categorization, serves via REST API.
+Monorepo: Spring Boot backend + React frontend. Aggregates 9 RSS feeds (7 EN + 2 DE), processes articles through Claude Haiku 5.5 for German summarization/tagging/categorization, serves via REST API.
 
 **Production:** `https://maschinenpost.celox.io` — VPS at 69.62.121.168 (SSH alias: `celox`), PostgreSQL 16, backend on port 3010, Nginx reverse proxy with SSL.
 
@@ -120,7 +120,7 @@ All endpoints under `/api/`. Backend returns Spring `Page<T>` JSON for paginated
 | `ArticleResponseTest` | 6 | DTO mapping, HTML stripping, truncation |
 | `FeedServiceTest` | 10 | Feed seeding (9 feeds), SHA-256 hashes, content filter, ad filter, feed migration |
 | `ArticleServiceTest` | 11 | Sorting, category/search routing, stats, 404 |
-| `AiSummaryServiceTest` | 7 | API-key check, AtomicBoolean guard, lock release, DuplicateDetection mock |
+| `AiSummaryServiceTest` | 11 | API-key check, AtomicBoolean guard, lock release, request body (effort low, cache_control, no sampling params, ends on user turn), text extraction skipping thinking blocks, default model haiku-5-5 |
 | `FeedSchedulerTest` | 5 | Concurrency guard, partial-failure recovery, lock release |
 
 All tests use mocks — no Spring context or DB needed. Run in <1s.
@@ -156,10 +156,11 @@ Additional safeguards:
 ## AI Token Optimization
 
 The Claude API integration is cost-optimized:
-- **Model:** Haiku 4.5 (`claude-haiku-4-5-20251001`) — do NOT switch to Sonnet/Opus without explicit approval (5-50x cost difference)
+- **Model:** Haiku 5.5 (`claude-haiku-5-5`, since 2026-11-13; was `claude-haiku-4-5-20251001`) — do NOT switch to Sonnet/Opus without explicit approval (5-50x cost difference)
+- **Haiku 5.5 specifics:** thinking is adaptive and on by default, effort default `medium` → request pins `"output_config": {"effort": "low"}` (measured: 0 thinking tokens). Thinking counts toward `max_tokens`, so the cap is 1024 (was 256). No `temperature`/`top_p`/`top_k` and no assistant prefill (both 400). The response may start with `thinking` blocks → `extractText()` concatenates only `type == "text"` blocks; `stop_reason` `refusal`/`max_tokens` → article stays unprocessed (retried next cycle).
 - **Input:** rawContent HTML-stripped (tags, entities, URLs, boilerplate), truncated to 600 chars, compact system prompt (~80 tokens)
-- **Output:** max 256 tokens (JSON response is typically ~150-200 tokens)
-- **Prompt caching:** Enabled via `anthropic-beta: prompt-caching-2024-07-31` header + `cache_control: ephemeral` on system message. System prompt cached after first call (90% cheaper for subsequent calls in same batch).
+- **Output:** max 1024 tokens (JSON response is typically ~140 tokens on Haiku 5.5; headroom is for thinking)
+- **Prompt caching:** `cache_control: ephemeral` stays on the system block (the old `prompt-caching-2024-07-31` beta header is gone — caching is GA). ⚠️ **It never actually caches:** the system prompt is ~200 tokens on Haiku 5.5, the minimum cacheable prefix is 512 (4096 on Haiku 4.5) — below that the API silently skips caching (measured 2026-11-13: two identical calls, `cache_read_input_tokens` 0 both times; 30-day Admin-API before: 302 k input, 0 cache reads). Do NOT pad the prompt to reach 512 — at $0.10/MTok input the whole system prompt costs ~$0.00002 per article. Token log (DEBUG) includes `cache_read`/`cache_write`; `input_tokens` excludes them.
 - **Title dedup:** Before API call, trigram Jaccard similarity (>=0.5) against recently processed articles. Skips API entirely for similar titles, marks as duplicate.
 - **Fetch rate:** 12h intervals to reduce total API calls
 
